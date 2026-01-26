@@ -99,6 +99,36 @@ alter table public.workout_exercises enable row level security;
 alter table public.exercise_sets enable row level security;
 alter table public.user_settings enable row level security;
 
+-- =========================
+-- Policies (re-runnable)
+-- =========================
+-- Postgresは CREATE POLICY IF NOT EXISTS をサポートしないため、再実行できるように事前にDROPします。
+
+drop policy if exists "exercises_select_own" on public.exercises;
+drop policy if exists "exercises_insert_own" on public.exercises;
+drop policy if exists "exercises_update_own" on public.exercises;
+drop policy if exists "exercises_delete_own" on public.exercises;
+
+drop policy if exists "workouts_select_own" on public.workouts;
+drop policy if exists "workouts_insert_own" on public.workouts;
+drop policy if exists "workouts_update_own" on public.workouts;
+drop policy if exists "workouts_delete_own" on public.workouts;
+
+drop policy if exists "workout_exercises_select_own" on public.workout_exercises;
+drop policy if exists "workout_exercises_insert_own" on public.workout_exercises;
+drop policy if exists "workout_exercises_update_own" on public.workout_exercises;
+drop policy if exists "workout_exercises_delete_own" on public.workout_exercises;
+
+drop policy if exists "exercise_sets_select_own" on public.exercise_sets;
+drop policy if exists "exercise_sets_insert_own" on public.exercise_sets;
+drop policy if exists "exercise_sets_update_own" on public.exercise_sets;
+drop policy if exists "exercise_sets_delete_own" on public.exercise_sets;
+
+drop policy if exists "user_settings_select_own" on public.user_settings;
+drop policy if exists "user_settings_insert_own" on public.user_settings;
+drop policy if exists "user_settings_update_own" on public.user_settings;
+drop policy if exists "user_settings_delete_own" on public.user_settings;
+
 -- exercises: 自分のみ CRUD
 create policy "exercises_select_own"
   on public.exercises for select
