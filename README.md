@@ -57,7 +57,8 @@ npm.cmd run dev
 	- Additional Redirect URLs:
 	  - `https://<your-vercel-domain>/auth/callback`
 5) Google Cloud 側の OAuth 設定（使う場合）
-	- Authorized redirect URI に `https://<your-vercel-domain>/auth/callback` を追加
+	- Authorized redirect URI は Supabase 側の Callback URL を設定
+	  - 例: `https://<project-ref>.supabase.co/auth/v1/callback`
 
 ※ ローカル（UI調整）だけしたいときは `.env.local` の `NEXT_PUBLIC_GYMAPP_LOCAL_ONLY=1` に戻すと、ログイン不要で動きます。
 

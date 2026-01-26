@@ -12,6 +12,8 @@ import { Card } from "@/app/_components/Card";
 import { inferTargetParts } from "@/lib/inferTargetParts";
 import { PartPicker } from "./PartPicker";
 
+export const dynamic = "force-dynamic";
+
 function toParts(value: FormDataEntryValue | null): string[] {
   if (!value) return [];
   try {

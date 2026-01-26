@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { getExercise, getGymLoginUrl, listExerciseHistory, updateExercise as repoUpdateExercise } from "@/lib/repo";
 import { ExerciseAutoSaveForm } from "./ExerciseAutoSaveForm";
 
+export const dynamic = "force-dynamic";
+
 function formatSet(weight: number | null, reps: number | null): string {
   const w = weight == null ? "" : `${weight}kg`;
   const r = reps == null ? "" : `${reps}`;

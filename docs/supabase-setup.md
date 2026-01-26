@@ -12,6 +12,9 @@
 - OAuth 同意画面を作成
 - OAuth クライアントID（Webアプリ）を作成
 
+※ Supabase の Google Provider を使う場合、Google のリダイレクト先は「あなたのアプリ（Vercel）」ではなく「Supabase の Callback URL」です。
+  - `https://<project-ref>.supabase.co/auth/v1/callback`
+
 ### 3.2 Supabase 側
 - Dashboard → Authentication → Providers → Google を有効化
 - Google の Client ID / Client Secret を登録

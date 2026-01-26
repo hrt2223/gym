@@ -17,6 +17,8 @@ import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { formatYmd } from "@/lib/date";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<{ ym?: string }>;
 };

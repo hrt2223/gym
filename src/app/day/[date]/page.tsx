@@ -7,6 +7,8 @@ import { Card } from "@/app/_components/Card";
 import { PrimaryButton } from "@/app/_components/PrimaryButton";
 import { createWorkout as repoCreateWorkout, getGymLoginUrl, listWorkoutsMenuByDate } from "@/lib/repo";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = { params: Promise<{ date: string }> };
 
 export default async function DayPage({ params }: PageProps) {

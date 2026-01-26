@@ -24,6 +24,8 @@ import {
   updateWorkout as repoUpdateWorkout,
 } from "@/lib/repo";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
