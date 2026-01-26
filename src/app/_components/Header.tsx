@@ -19,7 +19,7 @@ export function Header({ title, gymUrl }: { title: string; gymUrl?: string | nul
       <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
         <h1 className="text-base font-semibold">{title}</h1>
         <div className="flex items-center gap-3">
-          {gymUrl && (
+          {gymUrl ? (
             <a
               href={gymUrl}
               target="_blank"
@@ -28,6 +28,13 @@ export function Header({ title, gymUrl }: { title: string; gymUrl?: string | nul
             >
               🏋️ ジム
             </a>
+          ) : (
+            <Link
+              href="/settings"
+              className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-2 text-xs text-foreground"
+            >
+              🏋️ ジム
+            </Link>
           )}
           <Link href="/exercises" className="text-sm text-foreground">
             種目
