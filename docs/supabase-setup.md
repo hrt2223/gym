@@ -7,6 +7,8 @@
 - Supabase Dashboard → SQL Editor
 - [supabase/schema.sql](../supabase/schema.sql) を実行
 
+※ 「ジムログインURL」は `user_settings` テーブルに保存されます。スキーマ投入後、Table Editor に `user_settings` が見えることを確認してください。
+
 ## 3. Google OAuth 設定
 ### 3.1 Google Cloud 側
 - OAuth 同意画面を作成
@@ -39,8 +41,18 @@ Supabase の Authentication 設定に合わせて、下記を許可します。
     - 開発: `http://localhost:3000/auth/callback`
     - 本番: `https://<your-vercel-domain>/auth/callback`
 
+※ `localhost` は「その端末自身」を指します。iPhone からは iPhone 自身の localhost になるため、本番運用では必ず Vercel のドメインを設定します。
+
 ## 6. 環境変数
 - `.env.local` に以下を設定
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### Vercel の環境変数（重要）
+- Vercel Project → Settings → Environment Variables
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_GYMAPP_LOCAL_ONLY` は **未設定** か **"0"**
+
+※ `NEXT_PUBLIC_GYMAPP_LOCAL_ONLY=1` のままだとローカルDBモードになり、本番（Vercel）では保存が永続化しません。
 
