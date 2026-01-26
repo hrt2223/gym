@@ -18,8 +18,14 @@ export default async function SettingsPage() {
   async function autoSave(input: { gymLoginUrl: string | null }) {
     "use server";
 
-    const user = await requireUser();
-    await upsertGymLoginUrl({ userId: user.id, gymLoginUrl: input.gymLoginUrl });
+    try {
+      const user = await requireUser();
+      await upsertGymLoginUrl({ userId: user.id, gymLoginUrl: input.gymLoginUrl });
+      return { ok: true } as const;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "保存に失敗しました";
+      return { ok: false, message } as const;
+    }
   }
 
   return (

@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 type Props = {
   initialGymUrl: string | null;
-  onSave: (input: { gymLoginUrl: string | null }) => Promise<void>;
+  onSave: (
+    input: { gymLoginUrl: string | null }
+  ) => Promise<{ ok: true } | { ok: false; message: string }>;
 };
 
 function normalizeGymUrl(raw: string): string | null {
@@ -42,18 +44,30 @@ export function SettingsAutoSaveForm({ initialGymUrl, onSave }: Props) {
 
     startTransition(() => {
       onSave({ gymLoginUrl: next })
-        .then(() => {
-          lastPayloadRef.current = nextPayload;
-          setSavedAt(Date.now());
+        .then((res) => {
+          if (res.ok) {
+            lastPayloadRef.current = nextPayload;
+            setSavedAt(Date.now());
+            return;
+          }
+
+          const raw = res.message || "保存に失敗しました";
+
+          // ありがちな原因をユーザー向けに整形
+          if (/relation\s+"user_settings"\s+does\s+not\s+exist/i.test(raw)) {
+            setError("Supabaseにスキーマが入っていません（user_settings）。SQL Editorで schema.sql を実行してください。");
+            return;
+          }
+
+          if (/row[-\s]?level\s+security|RLS/i.test(raw)) {
+            setError("権限エラー（RLS）です。いったんログアウト→ログインし直して再試行してください。");
+            return;
+          }
+
+          setError(raw);
         })
-        .catch((e: unknown) => {
-          const msg =
-            e instanceof Error
-              ? e.message
-              : typeof e === "string"
-                ? e
-                : "保存に失敗しました";
-          setError(msg);
+        .catch(() => {
+          setError("保存に失敗しました");
         });
     });
   }, [gymUrl, onSave, payload]);
