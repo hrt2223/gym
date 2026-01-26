@@ -1,0 +1,5 @@
+- このリポジトリは筋トレ記録アプリ（MVP）です。Next.js（App Router）+ Supabase を前提に実装します。
+- DBは [supabase/schema.sql](../supabase/schema.sql) の設計を正とし、RLS（auth.uid()）で完全分離します。
+- 画面は iPhone Safari を最優先に、片手操作・短時間入力を重視してUIを作ります。
+- MVP範囲外（分析/SNS/複雑な集計）は追加しません。
+- ファイル変更は最小限・既存スタイルを尊重し、必要に応じて README を更新します。
