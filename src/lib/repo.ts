@@ -14,14 +14,18 @@ import {
 export async function getGymLoginUrl(userId: string): Promise<string | null> {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("user_settings")
-      .select("user_id, gym_login_url")
+      .select("gym_login_url")
       .eq("user_id", userId)
-      .limit(1);
+      .maybeSingle();
 
-    const row = (data ?? [])[0] as { gym_login_url?: string | null } | undefined;
-    return row?.gym_login_url ?? null;
+    if (error) {
+      console.error("getGymLoginUrl failed", error);
+      return null;
+    }
+
+    return (data as { gym_login_url?: string | null } | null)?.gym_login_url ?? null;
   }
 
   const db = await readLocalDb();
@@ -35,7 +39,7 @@ export async function upsertGymLoginUrl(input: {
 }): Promise<void> {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
-    await supabase.from("user_settings").upsert(
+    const { error } = await supabase.from("user_settings").upsert(
       {
         user_id: input.userId,
         gym_login_url: input.gymLoginUrl,
@@ -43,6 +47,10 @@ export async function upsertGymLoginUrl(input: {
       },
       { onConflict: "user_id" }
     );
+
+    if (error) {
+      throw new Error(error.message);
+    }
     return;
   }
 

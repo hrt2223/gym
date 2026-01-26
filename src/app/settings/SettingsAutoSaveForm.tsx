@@ -46,8 +46,14 @@ export function SettingsAutoSaveForm({ initialGymUrl, onSave }: Props) {
           lastPayloadRef.current = nextPayload;
           setSavedAt(Date.now());
         })
-        .catch(() => {
-          setError("保存に失敗しました");
+        .catch((e: unknown) => {
+          const msg =
+            e instanceof Error
+              ? e.message
+              : typeof e === "string"
+                ? e
+                : "保存に失敗しました";
+          setError(msg);
         });
     });
   }, [gymUrl, onSave, payload]);
