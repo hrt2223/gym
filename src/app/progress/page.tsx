@@ -363,10 +363,21 @@ export default async function ProgressPage({
                     href={`/workouts/${p.workout_id}`}
                     className="app-secondary-block"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm text-foreground">{p.workout_date}</div>
-                      <div className="text-sm text-foreground">
-                        {formatSetText(p.weight, p.reps)}
+                    <div className="w-full space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm text-foreground">{p.workout_date}</div>
+                        <div className="text-sm font-semibold text-foreground">
+                          {metricKey === "weight"
+                            ? p.weight != null
+                              ? `${p.weight}${metric.unit}`
+                              : "-"
+                            : p.reps != null
+                              ? `${p.reps}${metric.unit}`
+                              : "-"}
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        ベストセット：{formatSetText(p.weight, p.reps)}
                       </div>
                     </div>
                   </Link>
