@@ -67,24 +67,29 @@ textarea::placeholder {
   color: var(--muted-foreground);
 }
 
-button {
+button,
+a[class] {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: transform 90ms ease, filter 90ms ease, background-color 90ms ease, color 90ms ease,
     border-color 90ms ease;
   transform-origin: center;
 }
 
-button:active {
+button:active,
+a[class]:active {
   transform: scale(0.985);
   filter: brightness(0.95);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
+  button,
+  a[class] {
     transition: filter 90ms ease, background-color 90ms ease, color 90ms ease, border-color 90ms ease;
   }
 
-  button:active {
+  button:active,
+  a[class]:active {
     transform: none;
   }
 }
