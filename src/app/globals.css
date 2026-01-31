@@ -50,7 +50,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-noto-sans-jp), var(--font-geist-sans), "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", Arial, sans-serif;
 }
 
 input,
