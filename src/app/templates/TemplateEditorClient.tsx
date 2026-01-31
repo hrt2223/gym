@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-type ExerciseOption = { id: string; name: string };
+type ExerciseOption = { id: string; name: string; target_parts: string[] };
+
+const PART_ORDER = ["胸", "背中", "肩", "腕", "脚", "腹"] as const;
+type PartKey = (typeof PART_ORDER)[number] | "未分類";
 
 type Template = {
   id: string;
@@ -74,6 +77,32 @@ export function TemplateEditorClient({
   const [draft, setDraft] = useState<DraftTemplate>(() => toDraft(templates[0] ?? null));
   const [newExerciseId, setNewExerciseId] = useState<string>("");
   const router = useRouter();
+
+  const groupedExercises = useMemo(() => {
+    const map = new Map<PartKey, ExerciseOption[]>();
+    for (const e of exercises ?? []) {
+      const first = (e.target_parts ?? [])[0];
+      const key: PartKey = (PART_ORDER as readonly string[]).includes(String(first))
+        ? (first as PartKey)
+        : "未分類";
+      const arr = map.get(key) ?? [];
+      arr.push(e);
+      map.set(key, arr);
+    }
+
+    const keys: PartKey[] = [
+      ...PART_ORDER.filter((p) => (map.get(p) ?? []).length > 0),
+      ...(map.get("未分類")?.length ? (["未分類"] as PartKey[]) : []),
+    ];
+
+    for (const k of keys) {
+      const arr = map.get(k) ?? [];
+      arr.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+      map.set(k, arr);
+    }
+
+    return { keys, map };
+  }, [exercises]);
 
   const selected = useMemo(
     () => templates.find((t) => t.id === selectedId) ?? null,
@@ -148,10 +177,14 @@ export function TemplateEditorClient({
                 }}
               >
                 <option value="">種目を選択</option>
-                {exercises.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.name}
-                  </option>
+                {groupedExercises.keys.map((k) => (
+                  <optgroup key={k} label={`${k}（${(groupedExercises.map.get(k) ?? []).length}）`}>
+                    {(groupedExercises.map.get(k) ?? []).map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <button
@@ -245,10 +278,14 @@ export function TemplateEditorClient({
           onChange={(e) => setNewExerciseId(e.target.value)}
         >
           <option value="">追加する種目</option>
-          {exercises.map((opt) => (
-            <option key={opt.id} value={opt.id}>
-              {opt.name}
-            </option>
+          {groupedExercises.keys.map((k) => (
+            <optgroup key={k} label={`${k}（${(groupedExercises.map.get(k) ?? []).length}）`}>
+              {(groupedExercises.map.get(k) ?? []).map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <button

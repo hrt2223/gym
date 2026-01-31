@@ -46,6 +46,32 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   const workoutRecord = workout;
 
   const exercises = await listExercises(user.id);
+
+  const PART_ORDER = ["胸", "背中", "肩", "腕", "脚", "腹"] as const;
+  type PartKey = (typeof PART_ORDER)[number] | "未分類";
+  type Exercise = NonNullable<typeof exercises>[number];
+
+  const groupedExercises = new Map<PartKey, Exercise[]>();
+  for (const e of exercises ?? []) {
+    const first = (e.target_parts ?? [])[0];
+    const key: PartKey = (PART_ORDER as readonly string[]).includes(String(first))
+      ? (first as PartKey)
+      : "未分類";
+    const arr = groupedExercises.get(key) ?? [];
+    arr.push(e);
+    groupedExercises.set(key, arr);
+  }
+
+  const exerciseGroupKeys: PartKey[] = [
+    ...PART_ORDER.filter((p) => (groupedExercises.get(p) ?? []).length > 0),
+    ...(groupedExercises.get("未分類")?.length ? (["未分類"] as PartKey[]) : []),
+  ];
+
+  for (const k of exerciseGroupKeys) {
+    const arr = groupedExercises.get(k) ?? [];
+    arr.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    groupedExercises.set(k, arr);
+  }
   const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
   const workoutExerciseIds = (workoutExercises ?? []).map((we) => we.id);
   const exerciseIds = (workoutExercises ?? []).map((we) => we.exercise_id);
@@ -213,13 +239,15 @@ export default async function WorkoutEditPage({ params }: PageProps) {
               <option value="" disabled>
                 種目を選択
               </option>
-              {(exercises ?? []).map((e) => {
-                return (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                );
-              })}
+              {exerciseGroupKeys.map((k) => (
+                <optgroup key={k} label={`${k}（${(groupedExercises.get(k) ?? []).length}）`}>
+                  {(groupedExercises.get(k) ?? []).map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
             <button className="rounded-xl bg-accent px-4 py-2 text-accent-foreground">
               追加

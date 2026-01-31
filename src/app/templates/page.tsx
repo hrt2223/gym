@@ -49,7 +49,11 @@ export default async function TemplatesPage() {
         <Card>
           <TemplateEditorClient
             templates={templates}
-            exercises={(exercises ?? []).map((e) => ({ id: e.id, name: e.name }))}
+            exercises={(exercises ?? []).map((e) => ({
+              id: e.id,
+              name: e.name,
+              target_parts: e.target_parts ?? [],
+            }))}
             onSave={saveTemplate}
             onDelete={removeTemplate}
           />
