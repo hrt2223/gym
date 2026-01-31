@@ -10,7 +10,8 @@ import { WorkoutTemplateClient } from "./WorkoutTemplateClient";
 import {
   addSet as repoAddSet,
   addWorkoutExercise,
-  addWorkoutExercisesBestEffort,
+  applyWorkoutTemplateToWorkout,
+  deleteWorkoutTemplate as repoDeleteWorkoutTemplate,
   copyPreviousSets as repoCopyPreviousSets,
   deleteWorkout as repoDeleteWorkout,
   deleteSet as repoDeleteSet,
@@ -20,6 +21,8 @@ import {
   listPreviousTopSetsBefore,
   listSetsByWorkoutExerciseIds,
   listWorkoutExercises,
+  listWorkoutTemplates,
+  saveWorkoutTemplate,
   updateSet as repoUpdateSet,
   updateWorkout as repoUpdateWorkout,
 } from "@/lib/repo";
@@ -54,6 +57,8 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
     exerciseIds,
   });
+
+  const templates = await listWorkoutTemplates(user.id);
 
 
   async function autoSaveWorkout(input: {
@@ -118,18 +123,48 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     redirect(`/day/${workoutRecord.workout_date}`);
   }
 
-  async function applyTemplate(input: { workoutId: string; exerciseIds: string[] }) {
+  async function applyTemplate(input: { templateId: string }) {
     "use server";
 
     const user = await requireUser();
-    await addWorkoutExercisesBestEffort({
+    await applyWorkoutTemplateToWorkout({
       userId: user.id,
-      workoutId: input.workoutId,
-      exerciseIds: input.exerciseIds,
+      workoutId: id,
+      templateId: input.templateId,
     });
 
-    revalidatePath(`/workouts/${input.workoutId}`);
-    redirect(`/workouts/${input.workoutId}`);
+    redirect(`/workouts/${id}`);
+  }
+
+  async function saveTemplateFromWorkout(input: { name: string }) {
+    "use server";
+
+    const user = await requireUser();
+    const exerciseBlocks = (workoutExercises ?? []).map((we, idx) => ({
+      exerciseId: we.exercise_id,
+      sortOrder: we.sort_order ?? idx,
+      sets: (setsByWorkoutExerciseId[we.id] ?? []).map((s) => ({
+        set_order: s.set_order,
+        weight: s.weight ?? null,
+        reps: s.reps ?? null,
+      })),
+    }));
+
+    await saveWorkoutTemplate({
+      userId: user.id,
+      name: input.name,
+      exercises: exerciseBlocks.map((e) => ({
+        exerciseId: e.exerciseId,
+        sets: e.sets,
+      })),
+    });
+  }
+
+  async function deleteTemplate(input: { templateId: string }) {
+    "use server";
+
+    const user = await requireUser();
+    await repoDeleteWorkoutTemplate({ userId: user.id, templateId: input.templateId });
   }
 
   return (
@@ -199,10 +234,12 @@ export default async function WorkoutEditPage({ params }: PageProps) {
 
         <Card>
           <WorkoutTemplateClient
-            workoutId={id}
-            workoutExerciseIds={(workoutExercises ?? []).map((we) => we.exercise_id)}
+            templates={templates}
             exercises={(exercises ?? []).map((e) => ({ id: e.id, name: e.name }))}
+            currentExerciseCount={(workoutExercises ?? []).length}
             onApply={applyTemplate}
+            onSaveFromWorkout={saveTemplateFromWorkout}
+            onDelete={deleteTemplate}
           />
         </Card>
 

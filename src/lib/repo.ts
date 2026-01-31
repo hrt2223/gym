@@ -10,6 +10,9 @@ import {
   type ExerciseSet,
   type UserSettings,
   type Workout,
+  type WorkoutTemplate,
+  type WorkoutTemplateExercise,
+  type WorkoutTemplateSet,
 } from "@/lib/localdb";
 
 export async function getGymLoginUrl(userId: string): Promise<string | null> {
@@ -397,6 +400,25 @@ export type WorkoutMenu = {
     exercise_name: string;
     sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
   }>;
+};
+
+export type WorkoutTemplateSetRow = { set_order: number; weight: number | null; reps: number | null };
+
+export type WorkoutTemplateExerciseRow = {
+  id: string;
+  exercise_id: string;
+  sort_order: number;
+  exercise_name: string;
+  sets: WorkoutTemplateSetRow[];
+};
+
+export type WorkoutTemplateRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  exercises: WorkoutTemplateExerciseRow[];
 };
 
 export type TopSet = { weight: number | null; reps: number | null };
@@ -1077,6 +1099,378 @@ export async function listWorkoutExercises(input: {
         exercises: ex ? { name: ex.name, target_parts: ex.target_parts } : null,
       };
     });
+}
+
+export async function listWorkoutTemplates(userId: string): Promise<WorkoutTemplateRow[]> {
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+
+    type TemplateExerciseJoin = {
+      id: string;
+      sort_order: number;
+      exercise_id: string;
+      exercises?: { name?: string } | { name?: string }[] | null;
+      workout_template_sets?: Array<{ set_order: number; weight: number | null; reps: number | null } | null> | null;
+    };
+
+    const { data } = await supabase
+      .from("workout_templates")
+      .select(
+        "id, user_id, name, created_at, updated_at, workout_template_exercises(id, sort_order, exercise_id, exercises(name), workout_template_sets(set_order, weight, reps))"
+      )
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false });
+
+    const rows = (data ?? []) as Array<{
+      id: string;
+      user_id: string;
+      name: string;
+      created_at: string;
+      updated_at: string;
+      workout_template_exercises?: Array<TemplateExerciseJoin | null> | null;
+    }>;
+
+    return rows.map((t) => {
+      const exRaw = Array.isArray(t.workout_template_exercises) ? t.workout_template_exercises : [];
+      const exercises = exRaw
+        .filter((we): we is TemplateExerciseJoin => we != null)
+        .map((we) => {
+          const exRel = we.exercises;
+          const exerciseName = Array.isArray(exRel)
+            ? String(exRel[0]?.name ?? "")
+            : String(exRel?.name ?? "");
+
+          const setsRaw = Array.isArray(we.workout_template_sets) ? we.workout_template_sets : [];
+          const sets = setsRaw
+            .filter((s): s is { set_order: number; weight: number | null; reps: number | null } => s != null)
+            .map((s) => ({ set_order: s.set_order, weight: s.weight ?? null, reps: s.reps ?? null }))
+            .sort((a, b) => a.set_order - b.set_order);
+
+          return {
+            id: we.id,
+            exercise_id: we.exercise_id,
+            sort_order: Number.isFinite(we.sort_order) ? we.sort_order : 0,
+            exercise_name: exerciseName,
+            sets,
+          };
+        })
+        .sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
+
+      return {
+        id: t.id,
+        user_id: t.user_id,
+        name: t.name,
+        created_at: t.created_at,
+        updated_at: t.updated_at,
+        exercises,
+      };
+    });
+  }
+
+  const db = await readLocalDb();
+  const templates = db.workout_templates
+    .filter((t) => t.user_id === userId)
+    .sort((a, b) => (a.updated_at < b.updated_at ? 1 : a.updated_at > b.updated_at ? -1 : 0));
+
+  return templates.map((t) => {
+    const templateExercises = db.workout_template_exercises
+      .filter((we) => we.workout_template_id === t.id)
+      .sort((a, b) => (a.sort_order < b.sort_order ? -1 : a.sort_order > b.sort_order ? 1 : a.id.localeCompare(b.id)));
+
+    const exercises = templateExercises.map((we) => {
+      const ex = db.exercises.find((e) => e.user_id === userId && e.id === we.exercise_id);
+      const sets = db.workout_template_sets
+        .filter((s) => s.workout_template_exercise_id === we.id)
+        .sort((a, b) => (a.set_order < b.set_order ? -1 : a.set_order > b.set_order ? 1 : a.id.localeCompare(b.id)))
+        .map((s) => ({ set_order: s.set_order, weight: s.weight, reps: s.reps }));
+
+      return {
+        id: we.id,
+        exercise_id: we.exercise_id,
+        sort_order: we.sort_order,
+        exercise_name: ex?.name ?? "",
+        sets,
+      };
+    });
+
+    return {
+      id: t.id,
+      user_id: t.user_id,
+      name: t.name,
+      created_at: t.created_at,
+      updated_at: t.updated_at,
+      exercises,
+    };
+  });
+}
+
+export async function saveWorkoutTemplate(input: {
+  userId: string;
+  templateId?: string;
+  name: string;
+  exercises: Array<{
+    exerciseId: string;
+    sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
+  }>;
+}): Promise<{ id: string }> {
+  const name = input.name.trim() || "??????";
+
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+    const now = new Date().toISOString();
+
+    let templateId = input.templateId ?? "";
+    if (templateId) {
+      await supabase
+        .from("workout_templates")
+        .update({ name, updated_at: now })
+        .eq("id", templateId)
+        .eq("user_id", input.userId);
+
+      await supabase.from("workout_template_exercises").delete().eq("template_id", templateId);
+    } else {
+      const { data } = await supabase
+        .from("workout_templates")
+        .insert({ user_id: input.userId, name })
+        .select("id")
+        .single();
+      templateId = data ? String((data as { id: string }).id) : "";
+    }
+
+    if (!templateId) return { id: "" };
+
+    const exerciseRows = input.exercises.map((ex, idx) => ({
+      template_id: templateId,
+      exercise_id: ex.exerciseId,
+      sort_order: idx,
+    }));
+
+    if (exerciseRows.length > 0) {
+      const { data: inserted } = await supabase
+        .from("workout_template_exercises")
+        .insert(exerciseRows)
+        .select("id, sort_order");
+
+      const idBySort = new Map<number, string>();
+      for (const row of (inserted ?? []) as Array<{ id: string; sort_order: number }>) {
+        idBySort.set(row.sort_order, row.id);
+      }
+
+      const setRows = input.exercises.flatMap((ex, idx) => {
+        const templateExerciseId = idBySort.get(idx);
+        if (!templateExerciseId) return [];
+        return ex.sets.map((s) => ({
+          template_exercise_id: templateExerciseId,
+          set_order: s.set_order,
+          weight: s.weight,
+          reps: s.reps,
+        }));
+      });
+
+      if (setRows.length > 0) {
+        await supabase.from("workout_template_sets").insert(setRows);
+      }
+    }
+
+    return { id: templateId };
+  }
+
+  const db = await readLocalDb();
+  const now = nowIso();
+
+  let templateId = input.templateId ?? "";
+  let template = db.workout_templates.find((t) => t.user_id === input.userId && t.id === templateId) ?? null;
+
+  if (!template) {
+    templateId = newId();
+    template = {
+      id: templateId,
+      user_id: input.userId,
+      name,
+      created_at: now,
+      updated_at: now,
+    };
+    db.workout_templates.push(template);
+  } else {
+    template.name = name;
+    template.updated_at = now;
+  }
+
+  const oldExerciseIds = db.workout_template_exercises
+    .filter((we) => we.workout_template_id === templateId)
+    .map((we) => we.id);
+
+  db.workout_template_sets = db.workout_template_sets.filter(
+    (s) => !oldExerciseIds.includes(s.workout_template_exercise_id)
+  );
+  db.workout_template_exercises = db.workout_template_exercises.filter(
+    (we) => we.workout_template_id !== templateId
+  );
+
+  for (let i = 0; i < input.exercises.length; i += 1) {
+    const ex = input.exercises[i];
+    const templateExerciseId = newId();
+    db.workout_template_exercises.push({
+      id: templateExerciseId,
+      workout_template_id: templateId,
+      exercise_id: ex.exerciseId,
+      sort_order: i,
+    });
+
+    for (const s of ex.sets) {
+      db.workout_template_sets.push({
+        id: newId(),
+        workout_template_exercise_id: templateExerciseId,
+        set_order: s.set_order,
+        weight: s.weight,
+        reps: s.reps,
+      });
+    }
+  }
+
+  await writeLocalDb(db);
+  return { id: templateId };
+}
+
+export async function deleteWorkoutTemplate(input: { userId: string; templateId: string }): Promise<void> {
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+    await supabase.from("workout_templates").delete().eq("id", input.templateId).eq("user_id", input.userId);
+    return;
+  }
+
+  const db = await readLocalDb();
+  const template = db.workout_templates.find((t) => t.id === input.templateId);
+  if (!template || template.user_id !== input.userId) return;
+
+  const exerciseIds = db.workout_template_exercises
+    .filter((we) => we.workout_template_id === input.templateId)
+    .map((we) => we.id);
+
+  db.workout_template_sets = db.workout_template_sets.filter(
+    (s) => !exerciseIds.includes(s.workout_template_exercise_id)
+  );
+  db.workout_template_exercises = db.workout_template_exercises.filter(
+    (we) => we.workout_template_id !== input.templateId
+  );
+  db.workout_templates = db.workout_templates.filter((t) => t.id !== input.templateId);
+
+  await writeLocalDb(db);
+}
+
+export async function applyWorkoutTemplateToWorkout(input: {
+  userId: string;
+  workoutId: string;
+  templateId: string;
+}): Promise<void> {
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+
+    const { data: last } = (await supabase
+      .from("workout_exercises")
+      .select("sort_order")
+      .eq("workout_id", input.workoutId)
+      .order("sort_order", { ascending: false })
+      .limit(1)) as { data: Array<{ sort_order: number } | null> | null };
+
+    const baseSort = (last?.[0]?.sort_order ?? -1) as number;
+
+    const { data } = await supabase
+      .from("workout_template_exercises")
+      .select(
+        "id, exercise_id, sort_order, workout_template_sets(set_order, weight, reps), workout_templates!inner(user_id)"
+      )
+      .eq("template_id", input.templateId)
+      .eq("workout_templates.user_id", input.userId)
+      .order("sort_order", { ascending: true });
+
+    const templateExercises = (data ?? []) as Array<{
+      exercise_id: string;
+      workout_template_sets?: Array<{ set_order: number; weight: number | null; reps: number | null } | null> | null;
+    }>;
+
+    if (templateExercises.length === 0) return;
+
+    const workoutExerciseRows = templateExercises.map((te, idx) => ({
+      workout_id: input.workoutId,
+      exercise_id: te.exercise_id,
+      sort_order: baseSort + 1 + idx,
+    }));
+
+    const { data: inserted } = await supabase
+      .from("workout_exercises")
+      .insert(workoutExerciseRows)
+      .select("id, sort_order");
+
+    const idBySort = new Map<number, string>();
+    for (const row of (inserted ?? []) as Array<{ id: string; sort_order: number }>) {
+      idBySort.set(row.sort_order, row.id);
+    }
+
+    const setRows = templateExercises.flatMap((te, idx) => {
+      const workoutExerciseId = idBySort.get(baseSort + 1 + idx);
+      if (!workoutExerciseId) return [];
+      const sets = (te.workout_template_sets ?? []).filter(Boolean) as Array<{
+        set_order: number;
+        weight: number | null;
+        reps: number | null;
+      }>;
+      return sets.map((s) => ({
+        workout_exercise_id: workoutExerciseId,
+        set_order: s.set_order,
+        weight: s.weight,
+        reps: s.reps,
+      }));
+    });
+
+    if (setRows.length > 0) {
+      await supabase.from("exercise_sets").insert(setRows);
+    }
+
+    return;
+  }
+
+  const db = await readLocalDb();
+  const workout = db.workouts.find((w) => w.id === input.workoutId && w.user_id === input.userId);
+  if (!workout) return;
+
+  const template = db.workout_templates.find((t) => t.id === input.templateId && t.user_id === input.userId);
+  if (!template) return;
+
+  const templateExercises = db.workout_template_exercises
+    .filter((we) => we.workout_template_id === template.id)
+    .sort((a, b) => (a.sort_order < b.sort_order ? -1 : a.sort_order > b.sort_order ? 1 : a.id.localeCompare(b.id)));
+
+  const baseSort = db.workout_exercises
+    .filter((we) => we.workout_id === workout.id)
+    .reduce((m, we) => Math.max(m, we.sort_order), -1);
+
+  for (let i = 0; i < templateExercises.length; i += 1) {
+    const te = templateExercises[i];
+    const workoutExerciseId = newId();
+    db.workout_exercises.push({
+      id: workoutExerciseId,
+      workout_id: workout.id,
+      exercise_id: te.exercise_id,
+      sort_order: baseSort + 1 + i,
+    });
+
+    const sets = db.workout_template_sets
+      .filter((s) => s.workout_template_exercise_id === te.id)
+      .sort((a, b) => (a.set_order < b.set_order ? -1 : a.set_order > b.set_order ? 1 : a.id.localeCompare(b.id)));
+
+    for (const s of sets) {
+      db.exercise_sets.push({
+        id: newId(),
+        workout_exercise_id: workoutExerciseId,
+        set_order: s.set_order,
+        weight: s.weight,
+        reps: s.reps,
+      });
+    }
+  }
+
+  await writeLocalDb(db);
 }
 
 export async function addWorkoutExercise(input: {

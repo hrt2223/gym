@@ -28,6 +28,9 @@ export function Header({ title }: { title: string }) {
           <Link href="/exercises" className="shrink-0 text-sm text-foreground">
             種目
           </Link>
+          <Link href="/templates" className="shrink-0 text-sm text-foreground">
+            ??????
+          </Link>
           <Link href="/settings" className="shrink-0 text-sm text-foreground">
             設定
           </Link>

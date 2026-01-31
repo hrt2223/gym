@@ -33,6 +33,29 @@ export type ExerciseSet = {
   reps: number | null;
 };
 
+export type WorkoutTemplate = {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WorkoutTemplateExercise = {
+  id: string;
+  workout_template_id: string;
+  exercise_id: string;
+  sort_order: number;
+};
+
+export type WorkoutTemplateSet = {
+  id: string;
+  workout_template_exercise_id: string;
+  set_order: number;
+  weight: number | null;
+  reps: number | null;
+};
+
 export type UserSettings = {
   user_id: string;
   gym_login_url: string | null;
@@ -44,6 +67,9 @@ type LocalDb = {
   workouts: Workout[];
   workout_exercises: WorkoutExercise[];
   exercise_sets: ExerciseSet[];
+  workout_templates: WorkoutTemplate[];
+  workout_template_exercises: WorkoutTemplateExercise[];
+  workout_template_sets: WorkoutTemplateSet[];
   user_settings: UserSettings[];
 };
 
@@ -52,6 +78,9 @@ const DEFAULT_DB: LocalDb = {
   workouts: [],
   workout_exercises: [],
   exercise_sets: [],
+  workout_templates: [],
+  workout_template_exercises: [],
+  workout_template_sets: [],
   user_settings: [],
 };
 
@@ -69,6 +98,9 @@ export async function readLocalDb(): Promise<LocalDb> {
       workouts: parsed.workouts ?? [],
       workout_exercises: parsed.workout_exercises ?? [],
       exercise_sets: parsed.exercise_sets ?? [],
+      workout_templates: parsed.workout_templates ?? [],
+      workout_template_exercises: parsed.workout_template_exercises ?? [],
+      workout_template_sets: parsed.workout_template_sets ?? [],
       user_settings: parsed.user_settings ?? [],
     };
   } catch {

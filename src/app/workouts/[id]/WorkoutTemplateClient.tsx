@@ -1,29 +1,38 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import {
-  deleteWorkoutTemplate,
-  loadWorkoutTemplates,
-  upsertWorkoutTemplate,
-  type WorkoutTemplate,
-} from "@/lib/workoutTemplates";
+import { useRouter } from "next/navigation";
 
 type ExerciseOption = { id: string; name: string };
 
+type Template = {
+  id: string;
+  name: string;
+  exercises: Array<{
+    exercise_id: string;
+    sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
+  }>;
+};
+
 export function WorkoutTemplateClient({
-  workoutId,
-  workoutExerciseIds,
+  templates,
   exercises,
+  currentExerciseCount,
   onApply,
+  onSaveFromWorkout,
+  onDelete,
 }: {
-  workoutId: string;
-  workoutExerciseIds: string[];
+  templates: Template[];
   exercises: ExerciseOption[];
-  onApply: (input: { workoutId: string; exerciseIds: string[] }) => Promise<void>;
+  currentExerciseCount: number;
+  onApply: (input: { templateId: string }) => Promise<void>;
+  onSaveFromWorkout: (input: { name: string }) => Promise<void>;
+  onDelete: (input: { templateId: string }) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>(() => loadWorkoutTemplates());
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>(templates[0]?.id ?? "");
+  const [name, setName] = useState<string>("");
+  const router = useRouter();
 
   const selected = useMemo(
     () => templates.find((t) => t.id === selectedId) ?? null,
@@ -36,11 +45,9 @@ export function WorkoutTemplateClient({
     return map;
   }, [exercises]);
 
-  const currentMenuCount = workoutExerciseIds.length;
-
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold">テンプレ</div>
+      <div className="text-sm font-semibold">????</div>
 
       <div className="flex gap-2">
         <select
@@ -48,10 +55,10 @@ export function WorkoutTemplateClient({
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >
-          <option value="">テンプレを選択</option>
+          <option value="">???????</option>
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.name}（{t.exerciseIds.length}）
+              {t.name} ({t.exercises.length})
             </option>
           ))}
         </select>
@@ -59,48 +66,57 @@ export function WorkoutTemplateClient({
         <button
           type="button"
           className="shrink-0 rounded-xl bg-accent px-4 py-2 text-sm text-accent-foreground disabled:opacity-50"
-          disabled={!selected || selected.exerciseIds.length === 0 || isPending}
+          disabled={!selected || selected.exercises.length === 0 || isPending}
           onClick={() => {
             if (!selected) return;
-            startTransition(() => onApply({ workoutId, exerciseIds: selected.exerciseIds }));
+            startTransition(async () => {
+              await onApply({ templateId: selected.id });
+              router.refresh();
+            });
           }}
         >
-          追加
+          ??
         </button>
       </div>
 
-      {selected && selected.exerciseIds.length > 0 && (
+      {selected && selected.exercises.length > 0 && (
         <div className="text-xs text-muted-foreground">
-          {selected.exerciseIds
+          {selected.exercises
             .slice(0, 6)
-            .map((id) => exerciseNameById.get(id) ?? "(種目)")
+            .map((ex) => exerciseNameById.get(ex.exercise_id) ?? "(??)")
             .join(" / ")}
-          {selected.exerciseIds.length > 6 && ` / ＋${selected.exerciseIds.length - 6}`}
+          {selected.exercises.length > 6 && ` / +${selected.exercises.length - 6}`}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="?????"
+          className="flex-1 rounded-xl border px-3 py-2 text-sm"
+        />
         <button
           type="button"
           className="rounded-xl border border-border bg-background px-4 py-2 text-sm"
           onClick={() => {
-            if (currentMenuCount === 0) {
-              window.alert("まずこのワークアウトに種目を追加してください");
+            if (currentExerciseCount === 0) {
+              window.alert("?????????????");
               return;
             }
-
-            const name = window.prompt("テンプレ名", "いつものメニュー");
-            if (name == null) return;
             const trimmed = name.trim();
-            if (!trimmed) return;
-
-            upsertWorkoutTemplate({ name: trimmed, exerciseIds: workoutExerciseIds });
-            const next = loadWorkoutTemplates();
-            setTemplates(next);
-            setSelectedId(next[0]?.id ?? "");
+            if (!trimmed) {
+              window.alert("??????????????");
+              return;
+            }
+            startTransition(async () => {
+              await onSaveFromWorkout({ name: trimmed });
+              setName("");
+              router.refresh();
+            });
           }}
         >
-          このメニューを保存
+          ???????????
         </button>
 
         <button
@@ -109,19 +125,20 @@ export function WorkoutTemplateClient({
           disabled={!selectedId}
           onClick={() => {
             if (!selectedId) return;
-            if (!window.confirm("このテンプレを削除しますか？")) return;
-            deleteWorkoutTemplate(selectedId);
-            const next = loadWorkoutTemplates();
-            setTemplates(next);
-            setSelectedId("");
+            if (!window.confirm("????????????")) return;
+            startTransition(async () => {
+              await onDelete({ templateId: selectedId });
+              setSelectedId("");
+              router.refresh();
+            });
           }}
         >
-          削除
+          ??
         </button>
       </div>
 
       <div className="text-xs text-muted-foreground">
-        テンプレはこの端末（ブラウザ）に保存されます。
+        ?????????????????
       </div>
     </div>
   );
