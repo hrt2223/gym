@@ -323,7 +323,7 @@ export default async function ProgressPage({
                   <Link
                     key={`${p.workout_id}`}
                     href={`/workouts/${p.workout_id}`}
-                    className="block rounded-lg border border-border px-3 py-2"
+                    className="app-secondary-block"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm text-foreground">{p.workout_date}</div>

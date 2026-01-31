@@ -112,7 +112,7 @@ export function TemplateCreateClient({
               </select>
               <button
                 type="button"
-                className="shrink-0 rounded-lg border px-2 py-1 text-xs text-red-600"
+                className="app-control shrink-0 px-2 py-1 text-xs text-red-600"
                 onClick={() => {
                   setDraft((prev) => ({
                     ...prev,
@@ -160,7 +160,7 @@ export function TemplateCreateClient({
                   />
                   <button
                     type="button"
-                    className="rounded-lg border px-2 py-1 text-xs"
+                    className="app-control px-2 py-1 text-xs"
                     onClick={() => {
                       setDraft((prev) => {
                         const exCopy = [...prev.exercises];
@@ -176,7 +176,7 @@ export function TemplateCreateClient({
               ))}
               <button
                 type="button"
-                className="rounded-lg border px-2 py-1 text-xs"
+                className="app-control px-2 py-1 text-xs"
                 onClick={() => {
                   setDraft((prev) => {
                     const exCopy = [...prev.exercises];

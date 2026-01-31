@@ -193,7 +193,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
       <div className="flex flex-wrap items-center gap-1">
         <button
           type="button"
-          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          className="app-control px-2 py-1 text-xs"
           onPointerDown={() => startBump(() => adjustWeight(-2.5))}
           onPointerUp={stopBump}
           onPointerCancel={stopBump}
@@ -204,7 +204,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
         </button>
         <button
           type="button"
-          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          className="app-control px-2 py-1 text-xs"
           onPointerDown={() => startBump(() => adjustWeight(2.5))}
           onPointerUp={stopBump}
           onPointerCancel={stopBump}
@@ -215,7 +215,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
         </button>
         <button
           type="button"
-          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          className="app-control px-2 py-1 text-xs"
           onPointerDown={() => startBump(() => adjustReps(-1))}
           onPointerUp={stopBump}
           onPointerCancel={stopBump}
@@ -226,7 +226,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
         </button>
         <button
           type="button"
-          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          className="app-control px-2 py-1 text-xs"
           onPointerDown={() => startBump(() => adjustReps(1))}
           onPointerUp={stopBump}
           onPointerCancel={stopBump}
@@ -237,7 +237,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
         </button>
         <button
           type="button"
-          className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          className="app-control px-2 py-1 text-xs"
           disabled={isPending}
           onClick={del}
         >
