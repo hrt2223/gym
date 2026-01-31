@@ -10,9 +10,6 @@ import {
   type ExerciseSet,
   type UserSettings,
   type Workout,
-  type WorkoutTemplate,
-  type WorkoutTemplateExercise,
-  type WorkoutTemplateSet,
 } from "@/lib/localdb";
 
 export async function getGymLoginUrl(userId: string): Promise<string | null> {

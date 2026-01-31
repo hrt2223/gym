@@ -86,7 +86,7 @@ export function TemplateEditorClient({
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-semibold">??????</div>
+      <div className="text-sm font-semibold">テンプレ編集</div>
 
       <div className="flex gap-2">
         <select
@@ -94,7 +94,7 @@ export function TemplateEditorClient({
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >
-          <option value="">??????</option>
+          <option value="">テンプレを選択</option>
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -108,7 +108,7 @@ export function TemplateEditorClient({
             disabled={isPending}
             onClick={() => {
               if (!selectedId) return;
-              if (!window.confirm("????????????")) return;
+              if (!window.confirm("このテンプレを削除しますか？")) return;
               startTransition(async () => {
                 await onDelete({ templateId: selectedId });
                 setSelectedId("");
@@ -116,18 +116,18 @@ export function TemplateEditorClient({
               });
             }}
           >
-            ??
+            削除
           </button>
         )}
       </div>
 
       <div>
-        <label className="text-xs text-muted-foreground">?????</label>
+        <label className="text-xs text-muted-foreground">テンプレ名</label>
         <input
           className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
           value={draft.name}
           onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
-          placeholder="?: ???"
+          placeholder="例: 胸の日"
         />
       </div>
 
@@ -147,7 +147,7 @@ export function TemplateEditorClient({
                   });
                 }}
               >
-                <option value="">?????</option>
+                <option value="">種目を選択</option>
                 {exercises.map((opt) => (
                   <option key={opt.id} value={opt.id}>
                     {opt.name}
@@ -164,14 +164,14 @@ export function TemplateEditorClient({
                   }));
                 }}
               >
-                ??
+                削除
               </button>
             </div>
 
             <div className="mt-3 space-y-2">
               {ex.sets.map((s, sIndex) => (
                 <div key={s.key} className="flex items-center gap-2">
-                  <div className="text-xs text-muted-foreground">{sIndex + 1}???</div>
+                  <div className="text-xs text-muted-foreground">{sIndex + 1}セット</div>
                   <input
                     className="w-24 rounded-lg border px-2 py-1 text-sm"
                     placeholder="kg"
@@ -189,7 +189,7 @@ export function TemplateEditorClient({
                   />
                   <input
                     className="w-20 rounded-lg border px-2 py-1 text-sm"
-                    placeholder="?"
+                    placeholder="回"
                     value={s.reps}
                     onChange={(e) => {
                       const next = e.target.value;
@@ -231,7 +231,7 @@ export function TemplateEditorClient({
                   });
                 }}
               >
-                ?????
+                セット＋
               </button>
             </div>
           </div>
@@ -244,7 +244,7 @@ export function TemplateEditorClient({
           value={newExerciseId}
           onChange={(e) => setNewExerciseId(e.target.value)}
         >
-          <option value="">?????</option>
+          <option value="">追加する種目</option>
           {exercises.map((opt) => (
             <option key={opt.id} value={opt.id}>
               {opt.name}
@@ -274,7 +274,7 @@ export function TemplateEditorClient({
             setNewExerciseId("");
           }}
         >
-          ??
+          追加
         </button>
       </div>
 
@@ -285,12 +285,12 @@ export function TemplateEditorClient({
         onClick={() => {
           const name = draft.name.trim();
           if (!name) {
-            window.alert("??????????????");
+            window.alert("テンプレ名を入力してください");
             return;
           }
           const exercisesPayload = draft.exercises
             .filter((ex) => ex.exerciseId.trim().length > 0)
-            .map((ex, idx) => ({
+            .map((ex) => ({
               exerciseId: ex.exerciseId,
               sets: ex.sets.map((s, sIndex) => ({
                 set_order: sIndex,
@@ -309,7 +309,7 @@ export function TemplateEditorClient({
           });
         }}
       >
-        ??
+        保存
       </button>
     </div>
   );

@@ -47,7 +47,7 @@ export function WorkoutTemplateClient({
 
   return (
     <div className="space-y-3">
-      <div className="text-sm font-semibold">????</div>
+      <div className="text-sm font-semibold">テンプレ</div>
 
       <div className="flex gap-2">
         <select
@@ -55,7 +55,7 @@ export function WorkoutTemplateClient({
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
         >
-          <option value="">???????</option>
+          <option value="">テンプレを選択</option>
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.exercises.length})
@@ -75,7 +75,7 @@ export function WorkoutTemplateClient({
             });
           }}
         >
-          ??
+          追加
         </button>
       </div>
 
@@ -83,7 +83,7 @@ export function WorkoutTemplateClient({
         <div className="text-xs text-muted-foreground">
           {selected.exercises
             .slice(0, 6)
-            .map((ex) => exerciseNameById.get(ex.exercise_id) ?? "(??)")
+            .map((ex) => exerciseNameById.get(ex.exercise_id) ?? "(種目)")
             .join(" / ")}
           {selected.exercises.length > 6 && ` / +${selected.exercises.length - 6}`}
         </div>
@@ -93,7 +93,7 @@ export function WorkoutTemplateClient({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="?????"
+          placeholder="テンプレ名"
           className="flex-1 rounded-xl border px-3 py-2 text-sm"
         />
         <button
@@ -101,12 +101,12 @@ export function WorkoutTemplateClient({
           className="rounded-xl border border-border bg-background px-4 py-2 text-sm"
           onClick={() => {
             if (currentExerciseCount === 0) {
-              window.alert("?????????????");
+              window.alert("まずこのワークアウトに種目を追加してください");
               return;
             }
             const trimmed = name.trim();
             if (!trimmed) {
-              window.alert("??????????????");
+              window.alert("テンプレ名を入力してください");
               return;
             }
             startTransition(async () => {
@@ -116,7 +116,7 @@ export function WorkoutTemplateClient({
             });
           }}
         >
-          ???????????
+          このメニューを保存
         </button>
 
         <button
@@ -125,7 +125,7 @@ export function WorkoutTemplateClient({
           disabled={!selectedId}
           onClick={() => {
             if (!selectedId) return;
-            if (!window.confirm("????????????")) return;
+            if (!window.confirm("このテンプレを削除しますか？")) return;
             startTransition(async () => {
               await onDelete({ templateId: selectedId });
               setSelectedId("");
@@ -133,12 +133,12 @@ export function WorkoutTemplateClient({
             });
           }}
         >
-          ??
+          削除
         </button>
       </div>
 
       <div className="text-xs text-muted-foreground">
-        ?????????????????
+        テンプレはアカウント単位で保存されます。
       </div>
     </div>
   );

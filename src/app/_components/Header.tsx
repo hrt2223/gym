@@ -29,7 +29,7 @@ export function Header({ title }: { title: string }) {
             種目
           </Link>
           <Link href="/templates" className="shrink-0 text-sm text-foreground">
-            ??????
+            テンプレ
           </Link>
           <Link href="/settings" className="shrink-0 text-sm text-foreground">
             設定
