@@ -12,9 +12,11 @@ type PartKey = (typeof PART_ORDER)[number] | "未分類";
 export function ExerciseProgressPickerClient({
   exercises,
   selectedId,
+  keepParams,
 }: {
   exercises: ExerciseOption[];
   selectedId: string;
+  keepParams: { metric: "weight" | "reps"; range: "12w" | "6m" | "all"; bucket: "2w" | "4w" };
 }) {
   const router = useRouter();
   const [q, setQ] = useState<string>("");
@@ -61,11 +63,16 @@ export function ExerciseProgressPickerClient({
         value={selectedId}
         onChange={(e) => {
           const next = e.target.value;
+          const params = new URLSearchParams();
+          params.set("range", keepParams.range);
+          params.set("bucket", keepParams.bucket);
+          params.set("metric", keepParams.metric);
           if (!next) {
-            router.push("/progress");
+            router.push(`/progress?${params.toString()}`);
             return;
           }
-          router.push(`/progress?exerciseId=${encodeURIComponent(next)}`);
+          params.set("exerciseId", next);
+          router.push(`/progress?${params.toString()}`);
         }}
       >
         <option value="">種目を選択</option>
