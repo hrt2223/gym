@@ -555,6 +555,14 @@ export type ExerciseHistoryItem = {
   sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
 };
 
+export type ExerciseProgressPoint = {
+  workout_id: string;
+  workout_date: string;
+  workout_created_at: string;
+  weight: number | null;
+  reps: number | null;
+};
+
 export async function listExerciseHistory(input: {
   userId: string;
   exerciseId: string;
@@ -646,6 +654,38 @@ export async function listExerciseHistory(input: {
   }
 
   return Array.from(grouped.values());
+}
+
+export async function listExerciseProgress(input: {
+  userId: string;
+  exerciseId: string;
+  limit?: number;
+}): Promise<ExerciseProgressPoint[]> {
+  const history = await listExerciseHistory({
+    userId: input.userId,
+    exerciseId: input.exerciseId,
+    limit: input.limit ?? 120,
+  });
+
+  const points = history
+    .map((h) => {
+      const top = pickTopSet(h.sets);
+      if (!top) return null;
+      return {
+        workout_id: h.workout_id,
+        workout_date: h.workout_date,
+        workout_created_at: h.workout_created_at,
+        weight: top.weight ?? null,
+        reps: top.reps ?? null,
+      } satisfies ExerciseProgressPoint;
+    })
+    .filter((p): p is ExerciseProgressPoint => p != null);
+
+  // 古い→新しい
+  return points.sort((a, b) => {
+    if (a.workout_date !== b.workout_date) return a.workout_date < b.workout_date ? -1 : 1;
+    return a.workout_created_at < b.workout_created_at ? -1 : a.workout_created_at > b.workout_created_at ? 1 : 0;
+  });
 }
 
 export type MonthSummary = {
