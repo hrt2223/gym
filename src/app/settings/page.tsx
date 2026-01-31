@@ -30,7 +30,7 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <Header title="設定" gymUrl={gymUrl} />
+      <Header title="設定" />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <Card>
           <SettingsAutoSaveForm initialGymUrl={gymUrl} onSave={autoSave} />
