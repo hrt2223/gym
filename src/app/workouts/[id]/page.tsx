@@ -7,6 +7,7 @@ import { Card } from "@/app/_components/Card";
 import { SetRowClient } from "./SetRowClient";
 import { WorkoutAutoSaveForm } from "./WorkoutAutoSaveForm";
 import { WorkoutTemplateClient } from "./WorkoutTemplateClient";
+import { ExercisePickerClient } from "./ExercisePickerClient";
 import {
   addSet as repoAddSet,
   addWorkoutExercise,
@@ -231,24 +232,14 @@ export default async function WorkoutEditPage({ params }: PageProps) {
 
         <Card>
           <form action={addExercise} className="flex gap-2">
-            <select
+            <ExercisePickerClient
               name="exercise_id"
-              className="w-full rounded-xl border px-3 py-2"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                種目を選択
-              </option>
-              {exerciseGroupKeys.map((k) => (
-                <optgroup key={k} label={`${k}（${(groupedExercises.get(k) ?? []).length}）`}>
-                  {(groupedExercises.get(k) ?? []).map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              placeholder="種目を選択"
+              groups={exerciseGroupKeys.map((k) => ({
+                key: k,
+                options: (groupedExercises.get(k) ?? []).map((e) => ({ id: e.id, name: e.name })),
+              }))}
+            />
             <button className="rounded-xl bg-accent px-4 py-2 text-accent-foreground">
               追加
             </button>

@@ -41,6 +41,7 @@ export function TemplateCreateClient({
   const [isPending, startTransition] = useTransition();
   const [draft, setDraft] = useState<DraftTemplate>({ name: "", exercises: [] });
   const [newExerciseId, setNewExerciseId] = useState<string>("");
+  const [exerciseSearch, setExerciseSearch] = useState<string>("");
 
   const groupedExercises = useMemo(() => {
     const map = new Map<PartKey, ExerciseOption[]>();
@@ -194,6 +195,12 @@ export function TemplateCreateClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <input
+          className="w-full rounded-xl border px-3 py-2 text-sm"
+          value={exerciseSearch}
+          onChange={(e) => setExerciseSearch(e.target.value)}
+          placeholder="種目検索（追加用）"
+        />
         <select
           className="flex-1 rounded-xl border px-3 py-2 text-sm"
           value={newExerciseId}
@@ -202,11 +209,17 @@ export function TemplateCreateClient({
           <option value="">追加する種目</option>
           {groupedExercises.keys.map((k) => (
             <optgroup key={k} label={`${k}（${(groupedExercises.map.get(k) ?? []).length}）`}>
-              {(groupedExercises.map.get(k) ?? []).map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.name}
-                </option>
-              ))}
+              {(groupedExercises.map.get(k) ?? [])
+                .filter((opt) => {
+                  const q = exerciseSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return opt.name.toLowerCase().includes(q);
+                })
+                .map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.name}
+                  </option>
+                ))}
             </optgroup>
           ))}
         </select>
@@ -231,6 +244,7 @@ export function TemplateCreateClient({
               ],
             }));
             setNewExerciseId("");
+            setExerciseSearch("");
           }}
         >
           追加

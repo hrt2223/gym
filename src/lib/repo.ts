@@ -1470,6 +1470,29 @@ export async function applyWorkoutTemplateToWorkout(input: {
   await writeLocalDb(db);
 }
 
+export async function createWorkoutFromTemplate(input: {
+  userId: string;
+  workoutDate: string;
+  memo: string | null;
+  templateId: string;
+}): Promise<{ id: string } | null> {
+  const created = await createWorkout({
+    userId: input.userId,
+    workoutDate: input.workoutDate,
+    memo: input.memo,
+  });
+
+  if (!created?.id) return null;
+
+  await applyWorkoutTemplateToWorkout({
+    userId: input.userId,
+    workoutId: created.id,
+    templateId: input.templateId,
+  });
+
+  return { id: created.id };
+}
+
 export async function addWorkoutExercise(input: {
   userId: string;
   workoutId: string;

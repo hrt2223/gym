@@ -60,6 +60,7 @@ export function TemplateEditorClient({
   initialSelectedId,
   onSave,
   onDelete,
+  onCreateTodayWorkout,
 }: {
   templates: Template[];
   exercises: ExerciseOption[];
@@ -73,6 +74,7 @@ export function TemplateEditorClient({
     }>;
   }) => Promise<void>;
   onDelete: (input: { templateId: string }) => Promise<void>;
+  onCreateTodayWorkout: (input: { templateId: string }) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string>(() => {
@@ -83,6 +85,7 @@ export function TemplateEditorClient({
   });
   const [draft, setDraft] = useState<DraftTemplate>(() => toDraft(templates[0] ?? null));
   const [newExerciseId, setNewExerciseId] = useState<string>("");
+  const [exerciseSearch, setExerciseSearch] = useState<string>("");
   const router = useRouter();
 
   const groupedExercises = useMemo(() => {
@@ -144,22 +147,37 @@ export function TemplateEditorClient({
           ))}
         </select>
         {selectedId && (
-          <button
-            type="button"
-            className="rounded-xl border border-border bg-background px-4 py-2 text-sm text-red-600 disabled:opacity-50"
-            disabled={isPending}
-            onClick={() => {
-              if (!selectedId) return;
-              if (!window.confirm("このテンプレを削除しますか？")) return;
-              startTransition(async () => {
-                await onDelete({ templateId: selectedId });
-                setSelectedId("");
-                router.refresh();
-              });
-            }}
-          >
-            削除
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm disabled:opacity-50"
+              disabled={isPending}
+              onClick={() => {
+                if (!selectedId) return;
+                startTransition(async () => {
+                  await onCreateTodayWorkout({ templateId: selectedId });
+                });
+              }}
+            >
+              今日のワークアウトを作成
+            </button>
+            <button
+              type="button"
+              className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-red-600 disabled:opacity-50"
+              disabled={isPending}
+              onClick={() => {
+                if (!selectedId) return;
+                if (!window.confirm("このテンプレを削除しますか？")) return;
+                startTransition(async () => {
+                  await onDelete({ templateId: selectedId });
+                  setSelectedId("");
+                  router.refresh();
+                });
+              }}
+            >
+              削除
+            </button>
+          </div>
         )}
       </div>
 
@@ -285,6 +303,12 @@ export function TemplateEditorClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <input
+          className="w-full rounded-xl border px-3 py-2 text-sm"
+          value={exerciseSearch}
+          onChange={(e) => setExerciseSearch(e.target.value)}
+          placeholder="種目検索（追加用）"
+        />
         <select
           className="flex-1 rounded-xl border px-3 py-2 text-sm"
           value={newExerciseId}
@@ -293,11 +317,17 @@ export function TemplateEditorClient({
           <option value="">追加する種目</option>
           {groupedExercises.keys.map((k) => (
             <optgroup key={k} label={`${k}（${(groupedExercises.map.get(k) ?? []).length}）`}>
-              {(groupedExercises.map.get(k) ?? []).map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.name}
-                </option>
-              ))}
+              {(groupedExercises.map.get(k) ?? [])
+                .filter((opt) => {
+                  const q = exerciseSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return opt.name.toLowerCase().includes(q);
+                })
+                .map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.name}
+                  </option>
+                ))}
             </optgroup>
           ))}
         </select>
@@ -322,6 +352,7 @@ export function TemplateEditorClient({
               ],
             }));
             setNewExerciseId("");
+            setExerciseSearch("");
           }}
         >
           追加

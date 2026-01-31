@@ -1,8 +1,11 @@
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { formatYmd } from "@/lib/date";
 import {
+  createWorkoutFromTemplate,
   deleteWorkoutTemplate,
   listExercises,
   listWorkoutTemplates,
@@ -50,6 +53,28 @@ export default async function TemplatesPage({
     await deleteWorkoutTemplate({ userId: user.id, templateId: input.templateId });
   }
 
+  async function createTodayWorkoutFromTemplate(input: { templateId: string }) {
+    "use server";
+    const user = await requireUser();
+    const date = formatYmd(new Date());
+
+    const created = await createWorkoutFromTemplate({
+      userId: user.id,
+      workoutDate: date,
+      memo: null,
+      templateId: input.templateId,
+    });
+
+    revalidatePath("/");
+    revalidatePath(`/day/${date}`);
+
+    if (!created?.id) {
+      return;
+    }
+
+    redirect(`/workouts/${created.id}`);
+  }
+
   return (
     <div>
       <Header title="テンプレ" />
@@ -80,6 +105,7 @@ export default async function TemplatesPage({
             initialSelectedId={initialSelectedId}
             onSave={saveTemplate}
             onDelete={removeTemplate}
+            onCreateTodayWorkout={createTodayWorkoutFromTemplate}
           />
         </Card>
       </main>
