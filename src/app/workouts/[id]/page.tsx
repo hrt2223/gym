@@ -6,9 +6,11 @@ import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { SetRowClient } from "./SetRowClient";
 import { WorkoutAutoSaveForm } from "./WorkoutAutoSaveForm";
+import { WorkoutTemplateClient } from "./WorkoutTemplateClient";
 import {
   addSet as repoAddSet,
   addWorkoutExercise,
+  addWorkoutExercisesBestEffort,
   copyPreviousSets as repoCopyPreviousSets,
   deleteWorkout as repoDeleteWorkout,
   deleteSet as repoDeleteSet,
@@ -102,6 +104,20 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     redirect(`/day/${workoutRecord.workout_date}`);
   }
 
+  async function applyTemplate(input: { workoutId: string; exerciseIds: string[] }) {
+    "use server";
+
+    const user = await requireUser();
+    await addWorkoutExercisesBestEffort({
+      userId: user.id,
+      workoutId: input.workoutId,
+      exerciseIds: input.exerciseIds,
+    });
+
+    revalidatePath(`/workouts/${input.workoutId}`);
+    redirect(`/workouts/${input.workoutId}`);
+  }
+
   return (
     <div>
       <Header title="ワークアウト" />
@@ -165,6 +181,15 @@ export default async function WorkoutEditPage({ params }: PageProps) {
               先に <Link href="/exercises" className="underline">種目</Link> を登録してください。
             </p>
           )}
+        </Card>
+
+        <Card>
+          <WorkoutTemplateClient
+            workoutId={id}
+            workoutExerciseIds={(workoutExercises ?? []).map((we) => we.exercise_id)}
+            exercises={(exercises ?? []).map((e) => ({ id: e.id, name: e.name }))}
+            onApply={applyTemplate}
+          />
         </Card>
 
         <div className="space-y-3">

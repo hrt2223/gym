@@ -1087,11 +1087,19 @@ export async function addWorkoutExercise(input: {
 }): Promise<void> {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
-    // sort_order は現状未実装（0固定）
+    const { data: last } = (await supabase
+      .from("workout_exercises")
+      .select("sort_order")
+      .eq("workout_id", input.workoutId)
+      .order("sort_order", { ascending: false })
+      .limit(1)) as { data: Array<{ sort_order: number } | null> | null };
+
+    const maxSort = (last?.[0]?.sort_order ?? -1) as number;
+
     await supabase.from("workout_exercises").insert({
       workout_id: input.workoutId,
       exercise_id: input.exerciseId,
-      sort_order: 0,
+      sort_order: maxSort + 1,
     });
     return;
   }
@@ -1107,6 +1115,97 @@ export async function addWorkoutExercise(input: {
     sort_order: maxSort + 1,
   });
   await writeLocalDb(db);
+}
+
+export async function addWorkoutExercisesBestEffort(input: {
+  userId: string;
+  workoutId: string;
+  exerciseIds: string[];
+}): Promise<{ attempted: number; inserted: number }> {
+  const uniq = Array.from(new Set(input.exerciseIds.map(String))).filter((id) => id.trim().length > 0);
+
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+
+    const { data: existingRows } = (await supabase
+      .from("workout_exercises")
+      .select("exercise_id, sort_order")
+      .eq("workout_id", input.workoutId)) as {
+      data: Array<{ exercise_id: string; sort_order: number } | null> | null;
+    };
+
+    const existing = new Set(
+      (existingRows ?? []).filter((r): r is { exercise_id: string; sort_order: number } => !!r).map((r) => r.exercise_id)
+    );
+    const maxSort = (existingRows ?? [])
+      .filter((r): r is { exercise_id: string; sort_order: number } => !!r)
+      .reduce((m, r) => Math.max(m, r.sort_order ?? -1), -1);
+
+    // RLS で自分の種目だけが返るはず（Supabaseモード）
+    const { data: allowedRows } = (await supabase
+      .from("exercises")
+      .select("id")
+      .in("id", uniq)) as { data: Array<{ id: string } | null> | null };
+    const allowed = new Set((allowedRows ?? []).filter((r): r is { id: string } => !!r).map((r) => r.id));
+
+    const toInsert = uniq.filter((id) => allowed.has(id) && !existing.has(id));
+    if (toInsert.length === 0) return { attempted: uniq.length, inserted: 0 };
+
+    const rows = toInsert.map((exerciseId, idx) => ({
+      workout_id: input.workoutId,
+      exercise_id: exerciseId,
+      sort_order: maxSort + 1 + idx,
+    }));
+
+    const { error } = await supabase.from("workout_exercises").insert(rows);
+    if (error) {
+      // best effort: 失敗しても落としすぎない
+      console.error("addWorkoutExercisesBestEffort failed", error);
+      return { attempted: uniq.length, inserted: 0 };
+    }
+
+    return { attempted: uniq.length, inserted: rows.length };
+  }
+
+  const db = await readLocalDb();
+
+  const workout = db.workouts.find((w) => w.id === input.workoutId);
+  if (!workout || workout.user_id !== input.userId) {
+    return { attempted: uniq.length, inserted: 0 };
+  }
+
+  const existing = new Set(
+    db.workout_exercises
+      .filter((we) => we.workout_id === input.workoutId)
+      .map((we) => we.exercise_id)
+  );
+  let maxSort = db.workout_exercises
+    .filter((we) => we.workout_id === input.workoutId)
+    .reduce((m, we) => Math.max(m, we.sort_order), -1);
+
+  const allowed = new Set(
+    db.exercises
+      .filter((e) => e.user_id === input.userId)
+      .map((e) => e.id)
+  );
+
+  let inserted = 0;
+  for (const exerciseId of uniq) {
+    if (!allowed.has(exerciseId)) continue;
+    if (existing.has(exerciseId)) continue;
+    existing.add(exerciseId);
+    maxSort += 1;
+    db.workout_exercises.push({
+      id: newId(),
+      workout_id: input.workoutId,
+      exercise_id: exerciseId,
+      sort_order: maxSort,
+    });
+    inserted += 1;
+  }
+
+  await writeLocalDb(db);
+  return { attempted: uniq.length, inserted };
 }
 
 export async function deleteWorkoutExercise(input: {
