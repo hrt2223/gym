@@ -4,6 +4,7 @@ import { Card } from "@/app/_components/Card";
 import { requireUser } from "@/lib/auth";
 import { listExercises, listExerciseProgress } from "@/lib/repo";
 import { ExerciseProgressPickerClient } from "./ExerciseProgressPickerClient";
+import { ProgressChartClient } from "./ProgressChartClient";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,6 @@ function formatSetText(weight: number | null, reps: number | null): string {
 function ymdToDate(ymd: string): Date {
   // yyyy-MM-dd をローカル日付として扱う
   return new Date(`${ymd}T00:00:00`);
-}
-
-function formatMd(ymd: string): string {
-  // 例: 2026-01-31 -> 1/31
-  const m = ymd.slice(5, 7);
-  const d = ymd.slice(8, 10);
-  return `${parseInt(m, 10)}/${parseInt(d, 10)}`;
 }
 
 type Point = {
@@ -151,165 +145,6 @@ function signNumber(v: number): string {
   const rounded = Math.round(v * 10) / 10;
   if (rounded > 0) return `+${rounded}`;
   return String(rounded);
-}
-
-function ProgressChart({
-  points,
-  metric,
-  subtitle,
-}: {
-  points: Array<{ date: string; value: number }>;
-  metric: { label: string; unit: string };
-  subtitle: string;
-}) {
-  if (points.length < 2) return null;
-
-  const w = 320;
-  const h = 140;
-  const padL = 36;
-  const padR = 10;
-  const padT = 10;
-  const padB = 26;
-
-  const values = points.map((p) => p.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min;
-  const safeRange = range === 0 ? 1 : range;
-
-  const innerW = w - padL - padR;
-  const innerH = h - padT - padB;
-  const xStep = innerW / (points.length - 1);
-
-  const xy = points.map((p, i) => {
-    const x = padL + xStep * i;
-    const yNorm = (p.value - min) / safeRange;
-    const y = padT + innerH * (1 - yNorm);
-    return { x, y };
-  });
-
-  const path = xy.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const yMinText = `${min}${metric.unit}`;
-  const yMaxText = `${max}${metric.unit}`;
-
-  const firstDate = points[0].date;
-  const lastDate = points[points.length - 1].date;
-
-  return (
-    <div className="space-y-1">
-      <svg
-        viewBox={`0 0 ${w} ${h}`}
-        width="100%"
-        height={h}
-        role="img"
-        aria-label={`${metric.label}の推移`}
-        className="block"
-      >
-        {/* グリッド */}
-        {[0, 1, 2, 3, 4].map((t) => {
-          const y = padT + (innerH * t) / 4;
-          return (
-            <line
-              key={t}
-              x1={padL}
-              x2={w - padR}
-              y1={y}
-              y2={y}
-              stroke="currentColor"
-              strokeOpacity={0.12}
-            />
-          );
-        })}
-
-        {/* 軸（左/下） */}
-        <line
-          x1={padL}
-          x2={padL}
-          y1={padT}
-          y2={h - padB}
-          stroke="currentColor"
-          strokeOpacity={0.25}
-        />
-        <line
-          x1={padL}
-          x2={w - padR}
-          y1={h - padB}
-          y2={h - padB}
-          stroke="currentColor"
-          strokeOpacity={0.25}
-        />
-
-        {/* ラベル */}
-        <text x={2} y={padT + 10} fontSize="10" fill="currentColor" opacity={0.7}>
-          {yMaxText}
-        </text>
-        <text x={2} y={h - padB} fontSize="10" fill="currentColor" opacity={0.7}>
-          {yMinText}
-        </text>
-
-        {/* ライン */}
-        <polyline
-          points={path}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          className="text-accent"
-        />
-
-        {/* 点 */}
-        {xy.map((p, i) => (
-          <circle
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            r={3.2}
-            fill="currentColor"
-            className="text-accent"
-          />
-        ))}
-
-        {/* 最新だけ少し強調 */}
-        {(() => {
-          const last = xy[xy.length - 1];
-          return (
-            <circle
-              cx={last.x}
-              cy={last.y}
-              r={5}
-              fill="currentColor"
-              className="text-accent"
-              opacity={0.9}
-            />
-          );
-        })()}
-
-        {/* 端の日付 */}
-        <text
-          x={padL}
-          y={h - 8}
-          fontSize="10"
-          fill="currentColor"
-          opacity={0.7}
-        >
-          {formatMd(firstDate)}
-        </text>
-        <text
-          x={w - padR}
-          y={h - 8}
-          fontSize="10"
-          fill="currentColor"
-          opacity={0.7}
-          textAnchor="end"
-        >
-          {formatMd(lastDate)}
-        </text>
-      </svg>
-
-      <div className="text-[11px] text-muted-foreground">
-        {subtitle}
-      </div>
-    </div>
-  );
 }
 
 export default async function ProgressPage({
@@ -486,7 +321,7 @@ export default async function ProgressPage({
                 </div>
               </div>
 
-              <ProgressChart
+              <ProgressChartClient
                 metric={metric}
                 subtitle={`${bucketLabel(bucket)} / ${rangeLabel(range)}`}
                 points={aggregated
