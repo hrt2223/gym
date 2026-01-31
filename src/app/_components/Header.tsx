@@ -19,7 +19,7 @@ export function Header({ title }: { title: string }) {
       <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-background px-3 py-2 text-xs text-foreground"
+          className="app-pill shrink-0 text-xs text-foreground"
         >
           📅 カレンダー
         </Link>
@@ -27,25 +27,25 @@ export function Header({ title }: { title: string }) {
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             href="/gym"
-            className="inline-flex shrink-0 items-center justify-center rounded-full bg-accent px-3 py-2 text-xs text-accent-foreground"
+            className="app-pill app-pill-accent shrink-0 text-xs"
           >
             🏋️ ジム
           </Link>
-          <Link href="/exercises" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
+          <Link href="/exercises" className="app-pill shrink-0 text-sm text-foreground">
             種目
           </Link>
-          <Link href="/templates" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
+          <Link href="/templates" className="app-pill shrink-0 text-sm text-foreground">
             テンプレ
           </Link>
-          <Link href="/progress" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
+          <Link href="/progress" className="app-pill shrink-0 text-sm text-foreground">
             軌跡
           </Link>
-          <Link href="/settings" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
+          <Link href="/settings" className="app-pill shrink-0 text-sm text-foreground">
             設定
           </Link>
           {!isLocalOnly() && (
             <form action={signOut}>
-              <button type="submit" className="shrink-0 text-sm text-foreground">
+              <button type="submit" className="app-pill shrink-0 text-sm text-foreground">
                 ログアウト
               </button>
             </form>
