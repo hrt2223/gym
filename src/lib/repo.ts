@@ -1,4 +1,5 @@
 import { isLocalOnly } from "@/lib/appMode";
+import { GYM_MACHINE_PRESET_EXERCISES } from "@/lib/exercisePresets";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   nowIso,
@@ -128,6 +129,107 @@ export async function createExercise(input: {
     created_at: nowIso(),
   });
   await writeLocalDb(db);
+}
+
+export async function createExercisesBestEffort(input: {
+  userId: string;
+  exercises: { name: string; targetParts: string[] }[];
+}): Promise<{ attempted: number; inserted: number }> {
+  const deduped = Array.from(
+    new Map(
+      input.exercises
+        .map((e) => ({ name: e.name.trim(), targetParts: e.targetParts }))
+        .filter((e) => e.name.length > 0)
+        .map((e) => [e.name.toLowerCase(), e] as const)
+    ).values()
+  );
+
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+    let inserted = 0;
+
+    for (const e of deduped) {
+      const { error } = await supabase.from("exercises").insert({
+        user_id: input.userId,
+        name: e.name,
+        target_parts: e.targetParts,
+      });
+
+      if (!error) {
+        inserted += 1;
+      }
+    }
+
+    return { attempted: deduped.length, inserted };
+  }
+
+  const db = await readLocalDb();
+  const existingLower = new Set(
+    db.exercises
+      .filter((row) => row.user_id === input.userId)
+      .map((row) => row.name.trim().toLowerCase())
+  );
+
+  let inserted = 0;
+  for (const e of deduped) {
+    const lower = e.name.toLowerCase();
+    if (existingLower.has(lower)) continue;
+    existingLower.add(lower);
+    db.exercises.push({
+      id: newId(),
+      user_id: input.userId,
+      name: e.name,
+      target_parts: e.targetParts,
+      created_at: nowIso(),
+    });
+    inserted += 1;
+  }
+
+  await writeLocalDb(db);
+  return { attempted: deduped.length, inserted };
+}
+
+export async function seedDefaultExercisesIfEmpty(userId: string): Promise<boolean> {
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+    const presetNames = GYM_MACHINE_PRESET_EXERCISES.map((e) => e.name);
+    const { data, error } = await supabase
+      .from("exercises")
+      .select("name")
+      .in("name", presetNames);
+
+    if (error) {
+      console.error("seedDefaultExercisesIfEmpty: select failed", error);
+      return false;
+    }
+
+    const existing = new Set((data ?? []).map((row) => String((row as { name?: string }).name ?? "")));
+    if (existing.size >= presetNames.length) return false;
+
+    const result = await createExercisesBestEffort({
+      userId,
+      exercises: GYM_MACHINE_PRESET_EXERCISES,
+    });
+    return result.inserted > 0;
+  }
+
+  const db = await readLocalDb();
+  const presetLower = new Set(
+    GYM_MACHINE_PRESET_EXERCISES.map((e) => e.name.trim().toLowerCase()).filter((n) => n.length > 0)
+  );
+  const existingPresetLower = new Set(
+    db.exercises
+      .filter((e) => e.user_id === userId)
+      .map((e) => e.name.trim().toLowerCase())
+      .filter((n) => presetLower.has(n))
+  );
+  if (existingPresetLower.size >= presetLower.size) return false;
+
+  const result = await createExercisesBestEffort({
+    userId,
+    exercises: GYM_MACHINE_PRESET_EXERCISES,
+  });
+  return result.inserted > 0;
 }
 
 export async function updateExercise(input: {
@@ -533,6 +635,107 @@ export type MonthSummary = {
   totalSets: number;
   parts: Record<string, number>;
 };
+
+export type CalendarMonthData = {
+  summary: MonthSummary;
+  workoutDates: string[];
+};
+
+export async function getCalendarMonthData(input: {
+  userId: string;
+  startDate: string;
+  endDate: string;
+}): Promise<CalendarMonthData> {
+  const parts: Record<string, number> = { 胸: 0, 背中: 0, 肩: 0, 腕: 0, 脚: 0, 腹: 0 };
+
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+
+    const { data: workouts } = await supabase
+      .from("workouts")
+      .select("id, workout_date")
+      .gte("workout_date", input.startDate)
+      .lte("workout_date", input.endDate);
+
+    const workoutRows = ((workouts ?? []) as unknown) as Array<{ id: string; workout_date: string }>;
+    const workoutIds = workoutRows.map((w) => w.id);
+    const workoutDates = Array.from(new Set(workoutRows.map((w) => w.workout_date))).sort();
+    const workoutDays = workoutDates.length;
+
+    if (workoutIds.length === 0) {
+      return { summary: { workoutDays, totalSets: 0, parts }, workoutDates };
+    }
+
+    type WorkoutExerciseJoin = {
+      id: string;
+      exercise_id: string;
+      exercise_sets?: Array<{ id: string } | null> | null;
+      exercises?: { target_parts?: string[] | null } | { target_parts?: string[] | null }[] | null;
+    };
+
+    const { data: wes } = await supabase
+      .from("workout_exercises")
+      .select("id, exercise_id, workout_id, exercises(target_parts), exercise_sets(id)")
+      .in("workout_id", workoutIds);
+
+    const weRows = ((wes ?? []) as unknown) as Array<WorkoutExerciseJoin>;
+
+    let totalSets = 0;
+    for (const we of weRows) {
+      const exRel = we.exercises;
+      const targetParts = Array.isArray(exRel)
+        ? (exRel[0]?.target_parts ?? [])
+        : (exRel?.target_parts ?? []);
+
+      const setsRaw = Array.isArray(we.exercise_sets) ? we.exercise_sets : [];
+      const setsCount = setsRaw.filter((s) => s != null).length;
+      totalSets += setsCount;
+
+      for (let i = 0; i < setsCount; i += 1) {
+        for (const p of targetParts) {
+          if (typeof parts[p] === "number") parts[p] += 1;
+        }
+      }
+    }
+
+    return { summary: { workoutDays, totalSets, parts }, workoutDates };
+  }
+
+  const db = await readLocalDb();
+
+  const workouts = db.workouts
+    .filter((w) => w.user_id === input.userId)
+    .filter((w) => w.workout_date >= input.startDate && w.workout_date <= input.endDate);
+
+  const workoutDates = Array.from(new Set(workouts.map((w) => w.workout_date))).sort();
+  const workoutDays = workoutDates.length;
+  const workoutIds = new Set(workouts.map((w) => w.id));
+
+  const wes = db.workout_exercises.filter((we) => workoutIds.has(we.workout_id));
+  const weIds = new Set(wes.map((we) => we.id));
+  const weToExercise = new Map(wes.map((we) => [we.id, we.exercise_id] as const));
+
+  const exParts = new Map(
+    db.exercises
+      .filter((e) => e.user_id === input.userId)
+      .map((e) => [e.id, e.target_parts ?? []] as const)
+  );
+
+  let totalSets = 0;
+  for (const s of db.exercise_sets) {
+    if (!weIds.has(s.workout_exercise_id)) continue;
+    totalSets += 1;
+
+    const exerciseId = weToExercise.get(s.workout_exercise_id);
+    if (!exerciseId) continue;
+    const ps = exParts.get(exerciseId) ?? [];
+    for (const p of ps) {
+      if (typeof parts[p] === "number") parts[p] += 1;
+    }
+  }
+
+  return { summary: { workoutDays, totalSets, parts }, workoutDates };
+}
 
 export async function getMonthSummary(input: {
   userId: string;

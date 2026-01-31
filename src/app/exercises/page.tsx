@@ -3,13 +3,15 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import {
   createExercise as repoCreateExercise,
+  createExercisesBestEffort,
   deleteExercise as repoDeleteExercise,
-  getGymLoginUrl,
   listExercises,
 } from "@/lib/repo";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
+import { PrimaryButton } from "@/app/_components/PrimaryButton";
 import { inferTargetParts } from "@/lib/inferTargetParts";
+import { GYM_MACHINE_PRESET_EXERCISES } from "@/lib/exercisePresets";
 import { PartPicker } from "./PartPicker";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +28,19 @@ function toParts(value: FormDataEntryValue | null): string[] {
 
 export default async function ExercisesPage() {
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
   const exercises = await listExercises(user.id);
+
+  async function addGymPresets() {
+    "use server";
+    const user = await requireUser();
+
+    await createExercisesBestEffort({
+      userId: user.id,
+      exercises: GYM_MACHINE_PRESET_EXERCISES,
+    });
+
+    redirect("/exercises");
+  }
 
   async function createExercise(formData: FormData) {
     "use server";
@@ -68,7 +81,7 @@ export default async function ExercisesPage() {
 
   return (
     <div>
-      <Header title="種目管理" gymUrl={gymUrl} />
+      <Header title="種目管理" />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <div className="flex items-center justify-between">
           <Link
@@ -98,6 +111,17 @@ export default async function ExercisesPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               部位未選択なら種目名から自動推定します。
             </p>
+          </form>
+        </Card>
+
+        <Card>
+          <form action={addGymPresets} className="space-y-2">
+            <div className="text-sm font-medium">ジムのマシン一覧を追加</div>
+            <p className="text-xs text-muted-foreground">
+              有酸素/筋トレ/プレートロード/フリーウェイトを合計{GYM_MACHINE_PRESET_EXERCISES.length}
+              件、一括で登録します（同名はスキップ）。
+            </p>
+            <PrimaryButton>一覧を追加</PrimaryButton>
           </form>
         </Card>
 

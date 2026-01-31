@@ -12,7 +12,7 @@ import {
   subMonths,
 } from "date-fns";
 import { requireUser } from "@/lib/auth";
-import { createWorkout, getGymLoginUrl, getMonthSummary, listWorkoutsInRange } from "@/lib/repo";
+import { createWorkout, getCalendarMonthData } from "@/lib/repo";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { formatYmd } from "@/lib/date";
@@ -27,7 +27,6 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   const { ym } = await searchParams;
 
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
 
   const today = new Date();
   const currentMonth = ym ? parse(ym, "yyyy-MM", new Date()) : today;
@@ -35,19 +34,14 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  const workoutsInMonth = await listWorkoutsInRange({
+  const monthData = await getCalendarMonthData({
     userId: user.id,
     startDate: format(monthStart, "yyyy-MM-dd"),
     endDate: format(monthEnd, "yyyy-MM-dd"),
   });
 
-  const monthSummary = await getMonthSummary({
-    userId: user.id,
-    startDate: format(monthStart, "yyyy-MM-dd"),
-    endDate: format(monthEnd, "yyyy-MM-dd"),
-  });
-
-  const hasWorkout = new Set((workoutsInMonth ?? []).map((w) => w.workout_date));
+  const monthSummary = monthData.summary;
+  const hasWorkout = new Set(monthData.workoutDates);
 
   async function createTodayWorkout() {
     "use server";
@@ -87,7 +81,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <Header title={format(currentMonth, "yyyy年M月")} gymUrl={gymUrl} />
+      <Header title={format(currentMonth, "yyyy年M月")} />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <Card>
           <div className="flex items-center justify-between">

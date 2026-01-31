@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { PrimaryButton } from "@/app/_components/PrimaryButton";
-import { createWorkout as repoCreateWorkout, getGymLoginUrl, listWorkoutsMenuByDate } from "@/lib/repo";
+import { createWorkout as repoCreateWorkout, listWorkoutsMenuByDate } from "@/lib/repo";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,6 @@ export default async function DayPage({ params }: PageProps) {
   }
 
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
   const workouts = await listWorkoutsMenuByDate({ userId: user.id, date });
 
   async function createWorkout(formData: FormData) {
@@ -45,7 +44,7 @@ export default async function DayPage({ params }: PageProps) {
 
   return (
     <div>
-      <Header title={title} gymUrl={gymUrl} />
+      <Header title={title} />
       <main className="mx-auto max-w-md space-y-3 px-4 py-4">
         <div className="flex items-center justify-between">
           <Link

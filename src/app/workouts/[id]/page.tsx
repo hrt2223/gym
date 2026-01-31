@@ -14,10 +14,8 @@ import {
   deleteSet as repoDeleteSet,
   deleteWorkoutExercise,
   getWorkout,
-  getGymLoginUrl,
   getPreviousTopSet,
   listExercises,
-  listPreviousTopSetsBefore,
   listSets,
   listWorkoutExercises,
   updateSet as repoUpdateSet,
@@ -34,7 +32,6 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   const { id } = await params;
 
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
   const workout = await getWorkout(user.id, id);
 
   if (!workout) {
@@ -44,12 +41,6 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   const workoutRecord = workout;
 
   const exercises = await listExercises(user.id);
-  const prevTopByExerciseId = await listPreviousTopSetsBefore({
-    userId: user.id,
-    beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
-    exerciseIds: (exercises ?? []).map((e) => e.id),
-  });
-
   const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
 
   async function autoSaveWorkout(input: {
@@ -113,7 +104,7 @@ export default async function WorkoutEditPage({ params }: PageProps) {
 
   return (
     <div>
-      <Header title="ワークアウト" gymUrl={gymUrl} />
+      <Header title="ワークアウト" />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <div className="flex gap-2">
           <Link
@@ -158,14 +149,9 @@ export default async function WorkoutEditPage({ params }: PageProps) {
                 種目を選択
               </option>
               {(exercises ?? []).map((e) => {
-                const prev = prevTopByExerciseId[e.id];
-                const prevText = prev
-                  ? `${prev.weight != null ? `${prev.weight}kg` : ""}${prev.reps != null ? `×${prev.reps}` : ""}`
-                  : "";
-
                 return (
                   <option key={e.id} value={e.id}>
-                    {e.name}{prevText ? `（前回 ${prevText}）` : ""}
+                    {e.name}
                   </option>
                 );
               })}

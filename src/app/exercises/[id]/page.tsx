@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { revalidatePath } from "next/cache";
-import { getExercise, getGymLoginUrl, listExerciseHistory, updateExercise as repoUpdateExercise } from "@/lib/repo";
+import { getExercise, listExerciseHistory, updateExercise as repoUpdateExercise } from "@/lib/repo";
 import { ExerciseAutoSaveForm } from "./ExerciseAutoSaveForm";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,6 @@ export default async function ExerciseEditPage({ params }: PageProps) {
   const { id } = await params;
 
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
   const exercise = await getExercise(user.id, id);
 
   const history = await listExerciseHistory({ userId: user.id, exerciseId: id, limit: 30 });
@@ -49,7 +48,7 @@ export default async function ExerciseEditPage({ params }: PageProps) {
 
   return (
     <div>
-      <Header title="種目編集" gymUrl={gymUrl} />
+      <Header title="種目編集" />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <div className="flex items-center justify-between">
           <Link
