@@ -155,7 +155,7 @@ export default async function ExercisesPage() {
                 <a
                   key={k}
                   href={`#part-${encodeURIComponent(k)}`}
-                  className="shrink-0 rounded-full border border-border bg-background px-3 py-2 text-xs"
+                  className="app-pill shrink-0 text-xs text-foreground"
                 >
                   {k}
                   <span className="ml-1 text-muted-foreground">
@@ -206,7 +206,7 @@ export default async function ExercisesPage() {
                     <div className="flex flex-col gap-2">
                       <a
                         href={`/exercises/${e.id}`}
-                        className="rounded-lg border border-border bg-background px-3 py-2 text-center text-xs"
+                        className="app-secondary w-full text-center text-xs"
                       >
                         編集
                       </a>
@@ -214,7 +214,7 @@ export default async function ExercisesPage() {
                         <input type="hidden" name="id" value={e.id} />
                         <button
                           type="submit"
-                          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs"
+                          className="app-secondary w-full text-xs"
                         >
                           削除
                         </button>

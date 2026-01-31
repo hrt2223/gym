@@ -104,18 +104,18 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
         <div className="flex items-center justify-between">
           <Link
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="app-pill text-sm"
             href={`/?ym=${prevYm}`}
           >
             ←
           </Link>
           <form action={createTodayWorkout}>
-            <button className="rounded-full bg-accent px-4 py-3 text-sm text-accent-foreground">
+            <button className="app-pill app-pill-accent app-pill-lg text-sm">
               ＋ 今日の記録
             </button>
           </form>
           <Link
-            className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="app-pill text-sm"
             href={`/?ym=${nextYm}`}
           >
             →

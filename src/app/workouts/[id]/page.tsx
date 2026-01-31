@@ -390,16 +390,16 @@ function WorkoutExerciseBlock({
 
         <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch">
           <form action={copyPreviousSets}>
-            <button className="w-full rounded-lg border px-3 py-2 text-xs">
+            <button className="app-secondary w-full text-xs">
               前回コピー
             </button>
           </form>
           <form action={addSet}>
-            <button className="w-full rounded-lg border px-3 py-2 text-xs">セット＋</button>
+            <button className="app-secondary w-full text-xs">セット＋</button>
           </form>
           <form action={removeAction}>
             <input type="hidden" name="workout_exercise_id" value={workoutExerciseId} />
-            <button className="w-full rounded-lg border px-3 py-2 text-xs">削除</button>
+            <button className="app-secondary w-full text-xs">削除</button>
           </form>
         </div>
       </div>

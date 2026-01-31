@@ -125,6 +125,10 @@ body {
   transition: background-color 140ms ease, border-color 140ms ease, transform 90ms ease;
 }
 
+.app-pill-lg {
+  padding: 0.75rem 1rem;
+}
+
 @media (hover: hover) {
   .app-pill:hover {
     background-color: rgba(2, 6, 23, 0.04);
@@ -164,6 +168,31 @@ body {
   }
 }
 
+.app-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  padding: 0.5rem 0.75rem;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-secondary {
+    background-color: rgba(2, 4, 10, 0.50);
+    background-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.025) 55%,
+      rgba(255, 255, 255, 0.012) 100%
+    );
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+}
+
 input,
 textarea,
 select {
@@ -178,7 +207,9 @@ textarea::placeholder {
 }
 
 button,
-a[class*="rounded"] {
+a[class*="rounded"],
+.app-pill,
+.app-secondary {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: transform 90ms ease, filter 90ms ease, background-color 90ms ease, color 90ms ease,
@@ -197,7 +228,9 @@ a:active {
 }
 
 button:active,
-a[class*="rounded"]:active {
+a[class*="rounded"]:active,
+.app-pill:active,
+.app-secondary:active {
   transform: scale(0.985);
   filter: brightness(0.94);
   box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.08);
@@ -210,7 +243,9 @@ a[class*="rounded"]:active {
   }
 
   button:active,
-  a[class*="rounded"]:active {
+  a[class*="rounded"]:active,
+  .app-pill:active,
+  .app-secondary:active {
     filter: brightness(1.08);
     box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.06);
   }
