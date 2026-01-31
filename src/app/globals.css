@@ -68,7 +68,7 @@ textarea::placeholder {
 }
 
 button,
-a[class] {
+a[class*="rounded"] {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: transform 90ms ease, filter 90ms ease, background-color 90ms ease, color 90ms ease,
@@ -77,19 +77,20 @@ a[class] {
 }
 
 button:active,
-a[class]:active {
+a[class*="rounded"]:active {
   transform: scale(0.985);
-  filter: brightness(0.95);
+  filter: brightness(0.94);
+  box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.08);
 }
 
 @media (prefers-reduced-motion: reduce) {
   button,
-  a[class] {
+  a[class*="rounded"] {
     transition: filter 90ms ease, background-color 90ms ease, color 90ms ease, border-color 90ms ease;
   }
 
   button:active,
-  a[class]:active {
+  a[class*="rounded"]:active {
     transform: none;
   }
 }
