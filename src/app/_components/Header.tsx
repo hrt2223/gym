@@ -15,7 +15,7 @@ export function Header({ title }: { title: string }) {
   }
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
+    <header className="app-header sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
         <Link
           href="/"

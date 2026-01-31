@@ -20,7 +20,7 @@ export function PrimaryButton({
       type={type}
       disabled={pending}
       aria-disabled={pending}
-      className={`w-full rounded-xl bg-accent px-4 py-3 text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      className={`app-primary w-full rounded-xl bg-accent px-4 py-3 text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       {pending && pendingText ? pendingText : children}
     </button>
