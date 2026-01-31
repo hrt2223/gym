@@ -58,7 +58,7 @@ export default async function DayPage({ params }: PageProps) {
 
         <form action={createWorkout}>
           <input type="hidden" name="workout_date" value={date} />
-          <PrimaryButton>この日のワークアウトを作成</PrimaryButton>
+          <PrimaryButton pendingText="作成中…">この日のワークアウトを作成</PrimaryButton>
         </form>
 
         <div className="space-y-2">

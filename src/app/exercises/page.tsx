@@ -130,9 +130,7 @@ export default async function ExercisesPage() {
 
             <PartPicker />
 
-            <button className="w-full rounded-xl bg-accent px-4 py-3 text-accent-foreground">
-              追加
-            </button>
+            <PrimaryButton pendingText="追加中…">追加</PrimaryButton>
             <p className="mt-1 text-xs text-muted-foreground">
               部位未選択なら種目名から自動推定します。
             </p>
@@ -146,7 +144,7 @@ export default async function ExercisesPage() {
               有酸素/筋トレ/プレートロード/フリーウェイトを合計{GYM_MACHINE_PRESET_EXERCISES.length}
               件、一括で登録します（同名はスキップ）。
             </p>
-            <PrimaryButton>一覧を追加</PrimaryButton>
+            <PrimaryButton pendingText="追加中…">一覧を追加</PrimaryButton>
           </form>
         </Card>
 
