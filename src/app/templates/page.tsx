@@ -2,6 +2,7 @@ import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { formatYmd } from "@/lib/date";
 import {
