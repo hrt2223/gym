@@ -66,3 +66,25 @@ input::placeholder,
 textarea::placeholder {
   color: var(--muted-foreground);
 }
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease, filter 90ms ease, background-color 90ms ease, color 90ms ease,
+    border-color 90ms ease;
+  transform-origin: center;
+}
+
+button:active {
+  transform: scale(0.985);
+  filter: brightness(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: filter 90ms ease, background-color 90ms ease, color 90ms ease, border-color 90ms ease;
+  }
+
+  button:active {
+    transform: none;
+  }
+}
