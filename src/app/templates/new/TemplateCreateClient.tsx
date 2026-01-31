@@ -1,50 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 
 type ExerciseOption = { id: string; name: string; target_parts: string[] };
-
-const PART_ORDER = ["胸", "背中", "肩", "腕", "脚", "腹"] as const;
-type PartKey = (typeof PART_ORDER)[number] | "未分類";
-
-type Template = {
-  id: string;
-  name: string;
-  exercises: Array<{
-    exercise_id: string;
-    sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
-  }>;
-};
 
 type DraftSet = { key: string; weight: string; reps: string };
 
 type DraftExercise = { key: string; exerciseId: string; sets: DraftSet[] };
 
-type DraftTemplate = { id?: string; name: string; exercises: DraftExercise[] };
+type DraftTemplate = { name: string; exercises: DraftExercise[] };
+
+const PART_ORDER = ["胸", "背中", "肩", "腕", "脚", "腹"] as const;
+
+type PartKey = (typeof PART_ORDER)[number] | "未分類";
 
 function makeKey(): string {
   return Math.random().toString(16).slice(2);
-}
-
-function toDraft(template: Template | null): DraftTemplate {
-  if (!template) {
-    return { name: "", exercises: [] };
-  }
-
-  return {
-    id: template.id,
-    name: template.name,
-    exercises: template.exercises.map((ex) => ({
-      key: makeKey(),
-      exerciseId: ex.exercise_id,
-      sets: (ex.sets ?? []).map((s) => ({
-        key: makeKey(),
-        weight: s.weight == null ? "" : String(s.weight),
-        reps: s.reps == null ? "" : String(s.reps),
-      })),
-    })),
-  };
 }
 
 function parseNumber(raw: string): number | null {
@@ -54,36 +25,22 @@ function parseNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function TemplateEditorClient({
-  templates,
+export function TemplateCreateClient({
   exercises,
-  initialSelectedId,
-  onSave,
-  onDelete,
+  onCreate,
 }: {
-  templates: Template[];
   exercises: ExerciseOption[];
-  initialSelectedId?: string;
-  onSave: (input: {
-    templateId?: string;
+  onCreate: (input: {
     name: string;
     exercises: Array<{
       exerciseId: string;
       sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
     }>;
   }) => Promise<void>;
-  onDelete: (input: { templateId: string }) => Promise<void>;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [selectedId, setSelectedId] = useState<string>(() => {
-    if (initialSelectedId && templates.some((t) => t.id === initialSelectedId)) {
-      return initialSelectedId;
-    }
-    return templates[0]?.id ?? "";
-  });
-  const [draft, setDraft] = useState<DraftTemplate>(() => toDraft(templates[0] ?? null));
+  const [draft, setDraft] = useState<DraftTemplate>({ name: "", exercises: [] });
   const [newExerciseId, setNewExerciseId] = useState<string>("");
-  const router = useRouter();
 
   const groupedExercises = useMemo(() => {
     const map = new Map<PartKey, ExerciseOption[]>();
@@ -111,57 +68,9 @@ export function TemplateEditorClient({
     return { keys, map };
   }, [exercises]);
 
-  const selected = useMemo(
-    () => templates.find((t) => t.id === selectedId) ?? null,
-    [templates, selectedId]
-  );
-
-  useEffect(() => {
-    setDraft(toDraft(selected));
-  }, [selected]);
-
-  useEffect(() => {
-    if (!initialSelectedId) return;
-    if (!templates.some((t) => t.id === initialSelectedId)) return;
-    setSelectedId(initialSelectedId);
-  }, [initialSelectedId, templates]);
-
   return (
     <div className="space-y-4">
-      <div className="text-sm font-semibold">テンプレ編集</div>
-
-      <div className="flex gap-2">
-        <select
-          className="w-full rounded-xl border px-3 py-2 text-sm"
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-        >
-          <option value="">テンプレを選択</option>
-          {templates.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-        {selectedId && (
-          <button
-            type="button"
-            className="rounded-xl border border-border bg-background px-4 py-2 text-sm text-red-600 disabled:opacity-50"
-            disabled={isPending}
-            onClick={() => {
-              if (!selectedId) return;
-              if (!window.confirm("このテンプレを削除しますか？")) return;
-              startTransition(async () => {
-                await onDelete({ templateId: selectedId });
-                setSelectedId("");
-                router.refresh();
-              });
-            }}
-          >
-            削除
-          </button>
-        )}
-      </div>
+      <div className="text-sm font-semibold">新規テンプレ作成</div>
 
       <div>
         <label className="text-xs text-muted-foreground">テンプレ名</label>
@@ -331,17 +240,11 @@ export function TemplateEditorClient({
       <button
         type="button"
         className="w-full rounded-xl bg-accent px-4 py-3 text-sm text-accent-foreground disabled:opacity-50"
-        disabled={isPending || !selectedId}
+        disabled={isPending}
         onClick={() => {
-          if (!selectedId) {
-            window.alert("編集するテンプレを選択してください");
-            return;
-          }
           const name = draft.name.trim();
-          if (!name) {
-            window.alert("テンプレ名を入力してください");
-            return;
-          }
+          const finalName = name || "無題テンプレ";
+
           const exercisesPayload = draft.exercises
             .filter((ex) => ex.exerciseId.trim().length > 0)
             .map((ex) => ({
@@ -354,23 +257,16 @@ export function TemplateEditorClient({
             }));
 
           startTransition(async () => {
-            await onSave({
-              templateId: draft.id,
-              name,
-              exercises: exercisesPayload,
-            });
-            router.refresh();
+            await onCreate({ name: finalName, exercises: exercisesPayload });
           });
         }}
       >
-        保存
+        新規作成
       </button>
 
-      {!selectedId && (
-        <div className="text-xs text-muted-foreground">
-          新規作成は「新規テンプレを作成」から行ってください。
-        </div>
-      )}
+      <div className="text-xs text-muted-foreground">
+        作成後に、テンプレ一覧（編集画面）へ移動します。
+      </div>
     </div>
   );
 }

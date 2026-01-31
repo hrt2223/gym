@@ -1210,7 +1210,7 @@ export async function saveWorkoutTemplate(input: {
     sets: Array<{ set_order: number; weight: number | null; reps: number | null }>;
   }>;
 }): Promise<{ id: string }> {
-  const name = input.name.trim() || "??????";
+  const name = input.name.trim() || "無題テンプレ";
 
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
