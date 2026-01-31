@@ -141,16 +141,14 @@ export default async function CalendarPage({ searchParams }: PageProps) {
                 <Link
                   key={ymd}
                   href={`/day/${ymd}`}
-                  className={`flex h-12 flex-col items-center justify-center rounded-lg text-sm ${
-                    "text-foreground"
-                  } ${isToday ? "ring-2 ring-accent" : ""} ${
-                    marked ? "bg-muted" : ""
-                  }`}
+                  className={`app-day flex h-12 flex-col items-center justify-center text-sm text-foreground ${
+                    marked ? "app-day-marked" : ""
+                  } ${isToday ? "app-day-today" : ""}`}
                 >
                   <div className="leading-none">{d.getDate()}</div>
                   <div className="mt-1 h-1.5">
                     {marked && (
-                      <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                      <div className="app-day-dot" />
                     )}
                   </div>
                 </Link>
