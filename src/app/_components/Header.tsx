@@ -25,13 +25,13 @@ export function Header({ title }: { title: string }) {
           >
             🏋️ ジム
           </Link>
-          <Link href="/exercises" className="shrink-0 text-sm text-foreground">
+          <Link href="/exercises" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
             種目
           </Link>
-          <Link href="/templates" className="shrink-0 text-sm text-foreground">
+          <Link href="/templates" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
             テンプレ
           </Link>
-          <Link href="/settings" className="shrink-0 text-sm text-foreground">
+          <Link href="/settings" className="shrink-0 rounded-lg px-2 py-2 text-sm text-foreground">
             設定
           </Link>
           {!isLocalOnly() && (

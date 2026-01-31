@@ -76,6 +76,16 @@ a[class*="rounded"] {
   transform-origin: center;
 }
 
+a {
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 90ms ease, filter 90ms ease, color 90ms ease;
+}
+
+a:active {
+  opacity: 0.65;
+  filter: brightness(0.95);
+}
+
 button:active,
 a[class*="rounded"]:active {
   transform: scale(0.985);
@@ -87,6 +97,10 @@ a[class*="rounded"]:active {
   button,
   a[class*="rounded"] {
     transition: filter 90ms ease, background-color 90ms ease, color 90ms ease, border-color 90ms ease;
+  }
+
+  a {
+    transition: opacity 90ms ease, filter 90ms ease, color 90ms ease;
   }
 
   button:active,
