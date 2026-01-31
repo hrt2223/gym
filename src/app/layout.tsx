@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 const notoSansJp = Noto_Sans_JP({
   variable: "--font-noto-sans-jp",
-  subsets: ["latin", "japanese"],
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
