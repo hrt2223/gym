@@ -64,7 +64,7 @@ export function ExerciseAutoSaveForm({
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => {
       doSave();
-    }, 700);
+    }, 1200);
   }, [doSave]);
 
   useEffect(() => {

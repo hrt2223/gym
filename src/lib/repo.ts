@@ -439,33 +439,32 @@ export async function listPreviousTopSetsBefore(input: {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
 
-    // exercise_id ごとに「直近の1件」を取る（MVP想定で件数少なめ）
-    await Promise.all(
-      input.exerciseIds.map(async (exerciseId) => {
-        const { data } = await supabase
-          .from("workout_exercises")
-          .select(
-            "id, exercise_id, workout_id, workouts!inner(workout_date, created_at, user_id), exercise_sets(weight, reps)"
-          )
-          .eq("exercise_id", exerciseId)
-          .eq("workouts.user_id", input.userId)
-          .or(
-            `workouts.workout_date.lt.${input.beforeWorkout.workoutDate},and(workouts.workout_date.eq.${input.beforeWorkout.workoutDate},workouts.created_at.lt.${input.beforeWorkout.createdAt})`
-          )
-          .order("workout_date", { foreignTable: "workouts", ascending: false })
-          .order("created_at", { foreignTable: "workouts", ascending: false })
-          .limit(1);
+    const { data } = await supabase
+      .from("workout_exercises")
+      .select(
+        "id, exercise_id, workout_id, workouts!inner(workout_date, created_at, user_id), exercise_sets(weight, reps)"
+      )
+      .in("exercise_id", input.exerciseIds)
+      .eq("workouts.user_id", input.userId)
+      .or(
+        `workouts.workout_date.lt.${input.beforeWorkout.workoutDate},and(workouts.workout_date.eq.${input.beforeWorkout.workoutDate},workouts.created_at.lt.${input.beforeWorkout.createdAt})`
+      )
+      .order("workout_date", { foreignTable: "workouts", ascending: false })
+      .order("created_at", { foreignTable: "workouts", ascending: false })
+      .order("id", { ascending: false });
 
-        const row = (data ?? [])[0] as
-          | {
-              exercise_sets?: Array<{ weight: number | null; reps: number | null } | null> | null;
-            }
-          | undefined;
+    const rows = (data ?? []) as Array<{
+      exercise_id: string;
+      exercise_sets?: Array<{ weight: number | null; reps: number | null } | null> | null;
+    }>;
 
-        const sets = (row?.exercise_sets ?? []).filter(Boolean) as Array<{ weight: number | null; reps: number | null }>;
-        result[exerciseId] = pickTopSet(sets);
-      })
-    );
+    for (const row of rows) {
+      const exerciseId = String(row.exercise_id);
+      if (!(exerciseId in result)) continue;
+      if (result[exerciseId] !== null) continue;
+      const sets = (row.exercise_sets ?? []).filter(Boolean) as Array<{ weight: number | null; reps: number | null }>;
+      result[exerciseId] = pickTopSet(sets);
+    }
 
     return result;
   }
@@ -1239,6 +1238,45 @@ export async function listSets(input: { workoutExerciseId: string }): Promise<Ex
     .filter((s) => s.workout_exercise_id === input.workoutExerciseId)
     .sort((a, b) => (a.set_order < b.set_order ? -1 : a.set_order > b.set_order ? 1 : a.id.localeCompare(b.id)));
 }
+
+export async function listSetsByWorkoutExerciseIds(input: {
+  workoutExerciseIds: string[];
+}): Promise<Record<string, ExerciseSet[]>> {
+  const result: Record<string, ExerciseSet[]> = {};
+  for (const id of input.workoutExerciseIds) result[id] = [];
+  if (input.workoutExerciseIds.length === 0) return result;
+
+  if (!isLocalOnly()) {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("exercise_sets")
+      .select("id, workout_exercise_id, set_order, weight, reps")
+      .in("workout_exercise_id", input.workoutExerciseIds)
+      .order("set_order", { ascending: true });
+
+    for (const row of (data ?? []) as ExerciseSet[]) {
+      if (!result[row.workout_exercise_id]) {
+        result[row.workout_exercise_id] = [];
+      }
+      result[row.workout_exercise_id].push(row);
+    }
+
+    return result;
+  }
+
+  const db = await readLocalDb();
+  for (const s of db.exercise_sets) {
+    if (!result[s.workout_exercise_id]) continue;
+    result[s.workout_exercise_id].push(s);
+  }
+  for (const id of Object.keys(result)) {
+    result[id] = result[id].sort((a, b) =>
+      a.set_order < b.set_order ? -1 : a.set_order > b.set_order ? 1 : a.id.localeCompare(b.id)
+    );
+  }
+  return result;
+}
+
 
 export async function addSet(input: {
   workoutExerciseId: string;

@@ -16,9 +16,9 @@ import {
   deleteSet as repoDeleteSet,
   deleteWorkoutExercise,
   getWorkout,
-  getPreviousTopSet,
   listExercises,
-  listSets,
+  listPreviousTopSetsBefore,
+  listSetsByWorkoutExerciseIds,
   listWorkoutExercises,
   updateSet as repoUpdateSet,
   updateWorkout as repoUpdateWorkout,
@@ -44,6 +44,17 @@ export default async function WorkoutEditPage({ params }: PageProps) {
 
   const exercises = await listExercises(user.id);
   const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
+  const workoutExerciseIds = (workoutExercises ?? []).map((we) => we.id);
+  const exerciseIds = (workoutExercises ?? []).map((we) => we.exercise_id);
+  const setsByWorkoutExerciseId = await listSetsByWorkoutExerciseIds({
+    workoutExerciseIds,
+  });
+  const prevTopByExerciseId = await listPreviousTopSetsBefore({
+    userId: user.id,
+    beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
+    exerciseIds,
+  });
+
 
   async function autoSaveWorkout(input: {
     id: string;
@@ -62,10 +73,13 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     });
 
     const prevDate = input.previousWorkoutDate || workoutRecord.workout_date;
-    revalidatePath(`/workouts/${input.id}`);
-    revalidatePath("/");
-    revalidatePath(`/day/${prevDate}`);
-    revalidatePath(`/day/${input.workoutDate}`);
+    const dateChanged = prevDate !== input.workoutDate;
+
+    if (dateChanged) {
+      revalidatePath("/");
+      revalidatePath(`/day/${prevDate}`);
+      revalidatePath(`/day/${input.workoutDate}`);
+    }
   }
 
   async function addExercise(formData: FormData) {
@@ -201,6 +215,8 @@ export default async function WorkoutEditPage({ params }: PageProps) {
               exerciseId={we.exercise_id}
               title={we.exercises?.name ?? ""}
               targetParts={we.exercises?.target_parts ?? []}
+              sets={setsByWorkoutExerciseId[we.id] ?? []}
+              prevTop={prevTopByExerciseId[we.exercise_id] ?? null}
               removeAction={removeWorkoutExercise}
             />
           ))}
@@ -212,12 +228,14 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   );
 }
 
-async function WorkoutExerciseBlock({
+function WorkoutExerciseBlock({
   workoutExerciseId,
   workoutId,
   exerciseId,
   title,
   targetParts,
+  sets,
+  prevTop,
   removeAction,
 }: {
   workoutExerciseId: string;
@@ -225,16 +243,10 @@ async function WorkoutExerciseBlock({
   exerciseId: string;
   title: string;
   targetParts: string[];
+  sets: Array<{ id: string; set_order: number; weight: number | null; reps: number | null }>;
+  prevTop: { weight: number | null; reps: number | null } | null;
   removeAction: (formData: FormData) => Promise<void>;
 }) {
-  const user = await requireUser();
-  const sets = await listSets({ workoutExerciseId });
-  const prevTop = await getPreviousTopSet({
-    userId: user.id,
-    beforeWorkoutId: workoutId,
-    exerciseId,
-  });
-
   const prevText = prevTop
     ? `${prevTop.weight != null ? `${prevTop.weight}kg` : ""}${prevTop.reps != null ? `×${prevTop.reps}` : ""}`
     : "";
