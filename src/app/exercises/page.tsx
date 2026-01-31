@@ -192,7 +192,7 @@ export default async function ExercisesPage() {
                         {(e.target_parts ?? []).map((p: string) => (
                           <span
                             key={p}
-                            className="rounded-full bg-muted px-2 py-1 text-[11px] text-foreground"
+                            className="app-chip"
                           >
                             {p}
                           </span>

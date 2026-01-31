@@ -367,7 +367,7 @@ function WorkoutExerciseBlock({
               {targetParts.map((p) => (
                 <span
                   key={p}
-                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                  className="app-chip"
                 >
                   {p}
                 </span>

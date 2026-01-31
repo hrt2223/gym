@@ -94,7 +94,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
             {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => (
               <span
                 key={p}
-                className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                className="app-chip"
               >
                 {p} {monthSummary.parts[p] ?? 0}
               </span>
