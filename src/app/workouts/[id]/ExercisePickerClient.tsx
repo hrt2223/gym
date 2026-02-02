@@ -10,10 +10,14 @@ export function ExercisePickerClient({
   name,
   groups,
   placeholder,
+  value,
+  onChange,
 }: {
   name: string;
   placeholder: string;
   groups: Array<{ key: PartKey; options: ExerciseOption[] }>;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   const [q, setQ] = useState<string>("");
 
@@ -37,7 +41,12 @@ export function ExercisePickerClient({
         onChange={(e) => setQ(e.target.value)}
         placeholder="種目検索"
       />
-      <select name={name} className="w-full rounded-xl border px-3 py-2" defaultValue="">
+      <select
+        name={name}
+        className="w-full rounded-xl border px-3 py-2"
+        value={value ?? ""}
+        onChange={(e) => onChange?.(e.target.value)}
+      >
         <option value="" disabled>
           {placeholder}
         </option>

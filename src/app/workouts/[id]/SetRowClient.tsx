@@ -6,6 +6,7 @@ type Props = {
   setId: string;
   initialWeight: number | null;
   initialReps: number | null;
+  exerciseName: string;
   onSave: (input: { setId: string; weight: number | null; reps: number | null }) => Promise<void>;
   onDelete: (input: { setId: string }) => Promise<void>;
 };
@@ -31,7 +32,15 @@ function parseReps(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDelete }: Props) {
+// ランニングマシンかどうか判定
+function isRunningMachine(exerciseName: string): boolean {
+  const name = exerciseName.toLowerCase();
+  return name.includes("ランニング") || name.includes("トレッドミル") || name.includes("ジョギング");
+}
+
+export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, onSave, onDelete }: Props) {
+  const isRunning = isRunningMachine(exerciseName);
+  
   const [isPending, startTransition] = useTransition();
   const [weight, setWeight] = useState<string>(initialWeight == null ? "" : formatNumber(initialWeight));
   const [reps, setReps] = useState<string>(initialReps == null ? "" : String(initialReps));
@@ -147,41 +156,65 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
   return (
     <div className="w-full space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1">
-          <input
-            ref={weightRef}
-            name="weight"
-            inputMode="decimal"
-            placeholder="kg"
-            value={weight}
-            onChange={(e) => {
-              lastFocus.current = "weight";
-              setWeight(e.target.value);
-              scheduleSave();
-            }}
-            onBlur={() => doSave()}
-            className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
-          />
-          <span className="text-xs text-muted-foreground">kg</span>
-        </div>
+        {isRunning ? (
+          // ランニングマシン: 時間のみ
+          <div className="flex items-center gap-1">
+            <input
+              ref={weightRef}
+              name="weight"
+              inputMode="decimal"
+              placeholder="時間"
+              value={weight}
+              onChange={(e) => {
+                lastFocus.current = "weight";
+                setWeight(e.target.value);
+                scheduleSave();
+              }}
+              onBlur={() => doSave()}
+              className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
+            />
+            <span className="text-xs text-muted-foreground">分</span>
+          </div>
+        ) : (
+          // 通常の種目: 重量と回数
+          <>
+            <div className="flex items-center gap-1">
+              <input
+                ref={weightRef}
+                name="weight"
+                inputMode="decimal"
+                placeholder="kg"
+                value={weight}
+                onChange={(e) => {
+                  lastFocus.current = "weight";
+                  setWeight(e.target.value);
+                  scheduleSave();
+                }}
+                onBlur={() => doSave()}
+                className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">kg</span>
+            </div>
 
-        <div className="flex items-center gap-1">
-          <input
-            ref={repsRef}
-            name="reps"
-            inputMode="numeric"
-            placeholder="回"
-            value={reps}
-            onChange={(e) => {
-              lastFocus.current = "reps";
-              setReps(e.target.value);
-              scheduleSave();
-            }}
-            onBlur={() => doSave()}
-            className="w-20 rounded-lg border border-border bg-card px-2 py-1 text-sm"
-          />
-          <span className="text-xs text-muted-foreground">回</span>
-        </div>
+            <div className="flex items-center gap-1">
+              <input
+                ref={repsRef}
+                name="reps"
+                inputMode="numeric"
+                placeholder="回"
+                value={reps}
+                onChange={(e) => {
+                  lastFocus.current = "reps";
+                  setReps(e.target.value);
+                  scheduleSave();
+                }}
+                onBlur={() => doSave()}
+                className="w-20 rounded-lg border border-border bg-card px-2 py-1 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">回</span>
+            </div>
+          </>
+        )}
 
         {statusText && (
           <div className={`ml-auto text-xs ${error ? "text-red-600" : "text-muted-foreground"}`}>
@@ -190,60 +223,62 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        <button
-          type="button"
-          className="app-control px-2 py-1 text-xs"
-          onPointerDown={() => startBump(() => adjustWeight(-2.5))}
-          onPointerUp={stopBump}
-          onPointerCancel={stopBump}
-          onPointerLeave={stopBump}
-          onClick={(e) => e.preventDefault()}
-        >
-          -2.5kg
-        </button>
-        <button
-          type="button"
-          className="app-control px-2 py-1 text-xs"
-          onPointerDown={() => startBump(() => adjustWeight(2.5))}
-          onPointerUp={stopBump}
-          onPointerCancel={stopBump}
-          onPointerLeave={stopBump}
-          onClick={(e) => e.preventDefault()}
-        >
-          +2.5kg
-        </button>
-        <button
-          type="button"
-          className="app-control px-2 py-1 text-xs"
-          onPointerDown={() => startBump(() => adjustReps(-1))}
-          onPointerUp={stopBump}
-          onPointerCancel={stopBump}
-          onPointerLeave={stopBump}
-          onClick={(e) => e.preventDefault()}
-        >
-          -1回
-        </button>
-        <button
-          type="button"
-          className="app-control px-2 py-1 text-xs"
-          onPointerDown={() => startBump(() => adjustReps(1))}
-          onPointerUp={stopBump}
-          onPointerCancel={stopBump}
-          onPointerLeave={stopBump}
-          onClick={(e) => e.preventDefault()}
-        >
-          +1回
-        </button>
-        <button
-          type="button"
-          className="app-control px-2 py-1 text-xs"
-          disabled={isPending}
-          onClick={del}
-        >
-          ×
-        </button>
-      </div>
+      {!isRunning && (
+        <div className="flex flex-wrap items-center gap-1">
+          <button
+            type="button"
+            className="app-control px-2 py-1 text-xs"
+            onPointerDown={() => startBump(() => adjustWeight(-2.5))}
+            onPointerUp={stopBump}
+            onPointerCancel={stopBump}
+            onPointerLeave={stopBump}
+            onClick={(e) => e.preventDefault()}
+          >
+            -2.5kg
+          </button>
+          <button
+            type="button"
+            className="app-control px-2 py-1 text-xs"
+            onPointerDown={() => startBump(() => adjustWeight(2.5))}
+            onPointerUp={stopBump}
+            onPointerCancel={stopBump}
+            onPointerLeave={stopBump}
+            onClick={(e) => e.preventDefault()}
+          >
+            +2.5kg
+          </button>
+          <button
+            type="button"
+            className="app-control px-2 py-1 text-xs"
+            onPointerDown={() => startBump(() => adjustReps(-1))}
+            onPointerUp={stopBump}
+            onPointerCancel={stopBump}
+            onPointerLeave={stopBump}
+            onClick={(e) => e.preventDefault()}
+          >
+            -1回
+          </button>
+          <button
+            type="button"
+            className="app-control px-2 py-1 text-xs"
+            onPointerDown={() => startBump(() => adjustReps(1))}
+            onPointerUp={stopBump}
+            onPointerCancel={stopBump}
+            onPointerLeave={stopBump}
+            onClick={(e) => e.preventDefault()}
+          >
+            +1回
+          </button>
+          <button
+            type="button"
+            className="app-control px-2 py-1 text-xs"
+            disabled={isPending}
+            onClick={del}
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Card } from "@/app/_components/Card";
 import { SetRowClient } from "./SetRowClient";
 import { WorkoutAutoSaveForm } from "./WorkoutAutoSaveForm";
 import { WorkoutTemplateClient } from "./WorkoutTemplateClient";
-import { ExercisePickerClient } from "./ExercisePickerClient";
+import { AddExerciseClient } from "./AddExerciseClient";
 import {
   addSet as repoAddSet,
   addWorkoutExercise,
@@ -113,10 +113,8 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     }
   }
 
-  async function addExercise(formData: FormData) {
+  async function addExercise(exerciseId: string) {
     "use server";
-
-    const exerciseId = String(formData.get("exercise_id") || "");
 
     const user = await requireUser();
 
@@ -230,19 +228,13 @@ export default async function WorkoutEditPage({ params }: PageProps) {
         </Card>
 
         <Card>
-          <form action={addExercise} className="flex gap-2">
-            <ExercisePickerClient
-              name="exercise_id"
-              placeholder="種目を選択"
-              groups={exerciseGroupKeys.map((k) => ({
-                key: k,
-                options: (groupedExercises.get(k) ?? []).map((e) => ({ id: e.id, name: e.name })),
-              }))}
-            />
-            <button className="rounded-xl bg-accent px-4 py-2 text-accent-foreground">
-              追加
-            </button>
-          </form>
+          <AddExerciseClient
+            groups={exerciseGroupKeys.map((k) => ({
+              key: k,
+              options: (groupedExercises.get(k) ?? []).map((e) => ({ id: e.id, name: e.name })),
+            }))}
+            onAdd={addExercise}
+          />
           {(exercises ?? []).length === 0 && (
             <p className="mt-2 text-xs text-muted-foreground">
               先に <Link href="/exercises" className="underline">種目</Link> を登録してください。
@@ -380,6 +372,7 @@ function WorkoutExerciseBlock({
                 setId={s.id}
                 initialWeight={s.weight}
                 initialReps={s.reps}
+                exerciseName={title}
                 onSave={updateSet}
                 onDelete={deleteSet}
               />
