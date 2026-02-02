@@ -38,15 +38,20 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   const { id } = await params;
 
   const user = await requireUser();
-  const workout = await getWorkout(user.id, id);
+  
+  // 全データを最大限並列取得（2段階 → 1段階に統合）
+  const [workout, exercises, workoutExercises, templates] = await Promise.all([
+    getWorkout(user.id, id),
+    listExercises(user.id),
+    listWorkoutExercises({ userId: user.id, workoutId: id }),
+    listWorkoutTemplates(user.id),
+  ]);
 
   if (!workout) {
     redirect("/");
   }
 
   const workoutRecord = workout;
-
-  const exercises = await listExercises(user.id);
 
   const PART_ORDER = ["胸", "背中", "肩", "腕", "脚", "腹"] as const;
   type PartKey = (typeof PART_ORDER)[number] | "未分類";
@@ -68,19 +73,17 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     ...(groupedExercises.get("未分類")?.length ? (["未分類"] as PartKey[]) : []),
   ];
 
-  const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
   const workoutExerciseIds = (workoutExercises ?? []).map((we) => we.id);
   const exerciseIds = (workoutExercises ?? []).map((we) => we.exercise_id);
   
-  // データ取得を並列化
-  const [setsByWorkoutExerciseId, prevTopByExerciseId, templates] = await Promise.all([
+  // セット情報と前回記録を並列取得
+  const [setsByWorkoutExerciseId, prevTopByExerciseId] = await Promise.all([
     listSetsByWorkoutExerciseIds({ workoutExerciseIds }),
     listPreviousTopSetsBefore({
       userId: user.id,
       beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
       exerciseIds,
     }),
-    listWorkoutTemplates(user.id),
   ]);
 
 

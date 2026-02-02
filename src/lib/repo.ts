@@ -701,11 +701,12 @@ export type CalendarMonthData = {
   workoutDates: string[];
 };
 
-export async function getCalendarMonthData(input: {
+// カレンダー月データをキャッシュ（同一リクエスト内で重複取得を防ぐ）
+export const getCalendarMonthData = cache(async (input: {
   userId: string;
   startDate: string;
   endDate: string;
-}): Promise<CalendarMonthData> {
+}): Promise<CalendarMonthData> => {
   const parts: Record<string, number> = { 胸: 0, 背中: 0, 肩: 0, 腕: 0, 脚: 0, 腹: 0 };
 
   if (!isLocalOnly()) {
@@ -795,7 +796,7 @@ export async function getCalendarMonthData(input: {
   }
 
   return { summary: { workoutDays, totalSets, parts }, workoutDates };
-}
+});
 
 export async function getMonthSummary(input: {
   userId: string;
