@@ -244,7 +244,7 @@ export default async function WorkoutEditPage({ params }: PageProps) {
         <Card>
           <AddExerciseClient
             groups={exerciseGroupKeys.map((k) => ({
-              key: k,
+              key: k as "胸" | "背中" | "肩" | "腕" | "脚" | "腹" | "未分類",
               options: (groupedExercises.get(k) ?? []).map((e) => ({ id: e.id, name: e.name })),
             }))}
             onAdd={addExercise}

@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react";
 import { ExercisePickerClient } from "./ExercisePickerClient";
 
+type PartKey = "胸" | "背中" | "肩" | "腕" | "脚" | "腹" | "未分類";
+
 type Props = {
   groups: Array<{
-    key: string;
+    key: PartKey;
     options: Array<{ id: string; name: string }>;
   }>;
   onAdd: (exerciseId: string) => Promise<void>;

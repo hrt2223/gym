@@ -12,7 +12,7 @@ import {
   subMonths,
 } from "date-fns";
 import { requireUser } from "@/lib/auth";
-import { createWorkout, getCalendarMonthData } from "@/lib/repo";
+import { createWorkout, getCalendarMonthData, getWeeklySummary } from "@/lib/repo";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { formatYmd } from "@/lib/date";
@@ -34,11 +34,14 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  const monthData = await getCalendarMonthData({
-    userId: user.id,
-    startDate: format(monthStart, "yyyy-MM-dd"),
-    endDate: format(monthEnd, "yyyy-MM-dd"),
-  });
+  const [monthData, weeklySummary] = await Promise.all([
+    getCalendarMonthData({
+      userId: user.id,
+      startDate: format(monthStart, "yyyy-MM-dd"),
+      endDate: format(monthEnd, "yyyy-MM-dd"),
+    }),
+    getWeeklySummary({ userId: user.id }),
+  ]);
 
   const monthSummary = monthData.summary;
   const hasWorkout = new Set(monthData.workoutDates);
@@ -83,6 +86,25 @@ export default async function CalendarPage({ searchParams }: PageProps) {
     <div>
       <Header title={format(currentMonth, "yyyy年M月")} />
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
+        <Card>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold">直近7日間</div>
+            <div className="text-xs text-muted-foreground">
+              {weeklySummary.workoutDays}日 / {weeklySummary.totalSets}セット
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => (
+              <span
+                key={p}
+                className="app-chip"
+              >
+                {p} {weeklySummary.parts[p] ?? 0}
+              </span>
+            ))}
+          </div>
+        </Card>
+
         <Card>
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold">今月</div>

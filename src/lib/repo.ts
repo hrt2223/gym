@@ -890,6 +890,20 @@ export async function getMonthSummary(input: {
   return { workoutDays, totalSets, parts };
 }
 
+// 週間サマリー（直近7日間）
+export async function getWeeklySummary(input: {
+  userId: string;
+}): Promise<MonthSummary> {
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6); // 今日含めて7日間
+  
+  const startDate = sevenDaysAgo.toISOString().split("T")[0];
+  const endDate = today.toISOString().split("T")[0];
+
+  return getMonthSummary({ userId: input.userId, startDate, endDate });
+}
+
 export async function listWorkoutsMenuByDate(input: {
   userId: string;
   date: string;
