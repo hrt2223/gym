@@ -7,8 +7,6 @@ import { Card } from "@/app/_components/Card";
 import { PrimaryButton } from "@/app/_components/PrimaryButton";
 import { createWorkout as repoCreateWorkout, listWorkoutsMenuByDate } from "@/lib/repo";
 
-export const dynamic = "force-dynamic";
-
 type PageProps = { params: Promise<{ date: string }> };
 
 export default async function DayPage({ params }: PageProps) {
@@ -58,7 +56,7 @@ export default async function DayPage({ params }: PageProps) {
 
         <form action={createWorkout}>
           <input type="hidden" name="workout_date" value={date} />
-          <PrimaryButton pendingText="作成中…">この日のワークアウトを作成</PrimaryButton>
+          <PrimaryButton pendingText="作成中…" aria-label="この日のワークアウトを作成">この日のワークアウトを作成</PrimaryButton>
         </form>
 
         <div className="space-y-2">

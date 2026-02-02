@@ -28,8 +28,6 @@ import {
   updateWorkout as repoUpdateWorkout,
 } from "@/lib/repo";
 
-export const dynamic = "force-dynamic";
-
 type PageProps = {
   params: Promise<{ id: string }>;
 };
@@ -116,25 +114,35 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   async function addExercise(exerciseId: string) {
     "use server";
 
-    const user = await requireUser();
+    try {
+      const user = await requireUser();
 
-    if (!exerciseId) {
-      return;
+      if (!exerciseId) {
+        return;
+      }
+
+      await addWorkoutExercise({ userId: user.id, workoutId: id, exerciseId });
+
+      revalidatePath(`/workouts/${id}`);
+    } catch (error) {
+      console.error("addExercise failed:", error);
+      throw new Error("種目の追加に失敗しました");
     }
-
-    await addWorkoutExercise({ userId: user.id, workoutId: id, exerciseId });
-
-    revalidatePath(`/workouts/${id}`);
   }
 
   async function removeWorkoutExercise(formData: FormData) {
     "use server";
 
-    const workoutExerciseId = String(formData.get("workout_exercise_id") || "");
+    try {
+      const workoutExerciseId = String(formData.get("workout_exercise_id") || "");
 
-    await requireUser();
-    await deleteWorkoutExercise({ workoutExerciseId });
-    revalidatePath(`/workouts/${id}`);
+      await requireUser();
+      await deleteWorkoutExercise({ workoutExerciseId });
+      revalidatePath(`/workouts/${id}`);
+    } catch (error) {
+      console.error("removeWorkoutExercise failed:", error);
+      throw new Error("種目の削除に失敗しました");
+    }
   }
 
   async function deleteWorkout() {
@@ -150,14 +158,19 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   async function applyTemplate(input: { templateId: string }) {
     "use server";
 
-    const user = await requireUser();
-    await applyWorkoutTemplateToWorkout({
-      userId: user.id,
-      workoutId: id,
-      templateId: input.templateId,
-    });
+    try {
+      const user = await requireUser();
+      await applyWorkoutTemplateToWorkout({
+        userId: user.id,
+        workoutId: id,
+        templateId: input.templateId,
+      });
 
-    revalidatePath(`/workouts/${id}`);
+      revalidatePath(`/workouts/${id}`);
+    } catch (error) {
+      console.error("applyTemplate failed:", error);
+      throw new Error("テンプレの適用に失敗しました");
+    }
   }
 
   async function saveTemplateFromWorkout(input: { name: string }) {
@@ -212,6 +225,7 @@ export default async function WorkoutEditPage({ params }: PageProps) {
             <button
               type="submit"
               className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm text-red-600"
+              aria-label="このワークアウトを削除"
             >
               削除
             </button>

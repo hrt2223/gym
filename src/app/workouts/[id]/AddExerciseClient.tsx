@@ -41,7 +41,7 @@ export function AddExerciseClient({ groups, onAdd }: Props) {
         <ExercisePickerClient
           name="exercise_id"
           placeholder="種目を選択"
-          groups={groups as any}
+          groups={groups}
           value={selectedId}
           onChange={setSelectedId}
         />

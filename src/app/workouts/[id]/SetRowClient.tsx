@@ -58,6 +58,17 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
   const doSave = useCallback(() => {
     const nextWeight = parseWeight(weight);
     const nextReps = parseReps(reps);
+
+    // バリデーション: 0-1000の範囲チェック
+    if (nextWeight !== null && (nextWeight < 0 || nextWeight > 1000)) {
+      setError("重量は0〜1000の範囲で入力してください");
+      return;
+    }
+    if (nextReps !== null && (nextReps < 0 || nextReps > 1000)) {
+      setError("回数は0〜1000の範囲で入力してください");
+      return;
+    }
+
     const payload = JSON.stringify({ setId, weight: nextWeight, reps: nextReps });
     if (payload === lastPayloadRef.current) return;
 
@@ -293,6 +304,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
             className="app-control px-2 py-1 text-xs"
             disabled={isPending}
             onClick={del}
+            aria-label="このセットを削除"
           >
             ×
           </button>

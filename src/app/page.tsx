@@ -107,11 +107,12 @@ export default async function CalendarPage({ searchParams }: PageProps) {
             className="app-pill text-sm"
             href={`/?ym=${prevYm}`}
             prefetch={true}
+            aria-label="前の月へ"
           >
             ←
           </Link>
           <form action={createTodayWorkout}>
-            <button className="app-pill app-pill-accent app-pill-lg text-sm">
+            <button className="app-pill app-pill-accent app-pill-lg text-sm" aria-label="今日のワークアウトを作成">
               ＋ 今日の記録
             </button>
           </form>
@@ -119,6 +120,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
             className="app-pill text-sm"
             href={`/?ym=${nextYm}`}
             prefetch={true}
+            aria-label="次の月へ"
           >
             →
           </Link>
