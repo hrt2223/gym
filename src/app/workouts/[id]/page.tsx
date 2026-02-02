@@ -76,16 +76,17 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
   const workoutExerciseIds = (workoutExercises ?? []).map((we) => we.id);
   const exerciseIds = (workoutExercises ?? []).map((we) => we.exercise_id);
-  const setsByWorkoutExerciseId = await listSetsByWorkoutExerciseIds({
-    workoutExerciseIds,
-  });
-  const prevTopByExerciseId = await listPreviousTopSetsBefore({
-    userId: user.id,
-    beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
-    exerciseIds,
-  });
-
-  const templates = await listWorkoutTemplates(user.id);
+  
+  // データ取得を並列化
+  const [setsByWorkoutExerciseId, prevTopByExerciseId, templates] = await Promise.all([
+    listSetsByWorkoutExerciseIds({ workoutExerciseIds }),
+    listPreviousTopSetsBefore({
+      userId: user.id,
+      beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
+      exerciseIds,
+    }),
+    listWorkoutTemplates(user.id),
+  ]);
 
 
   async function autoSaveWorkout(input: {
@@ -122,12 +123,12 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     const user = await requireUser();
 
     if (!exerciseId) {
-      redirect(`/workouts/${id}`);
+      return;
     }
 
     await addWorkoutExercise({ userId: user.id, workoutId: id, exerciseId });
 
-    redirect(`/workouts/${id}`);
+    revalidatePath(`/workouts/${id}`);
   }
 
   async function removeWorkoutExercise(formData: FormData) {
@@ -137,7 +138,7 @@ export default async function WorkoutEditPage({ params }: PageProps) {
 
     await requireUser();
     await deleteWorkoutExercise({ workoutExerciseId });
-    redirect(`/workouts/${id}`);
+    revalidatePath(`/workouts/${id}`);
   }
 
   async function deleteWorkout() {
@@ -160,7 +161,7 @@ export default async function WorkoutEditPage({ params }: PageProps) {
       templateId: input.templateId,
     });
 
-    redirect(`/workouts/${id}`);
+    revalidatePath(`/workouts/${id}`);
   }
 
   async function saveTemplateFromWorkout(input: { name: string }) {

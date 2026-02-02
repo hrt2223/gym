@@ -6,8 +6,6 @@ import { listExercises, listExerciseProgress } from "@/lib/repo";
 import { ExerciseProgressPickerClient } from "./ExerciseProgressPickerClient";
 import { ProgressChartClient } from "./ProgressChartClient";
 
-export const dynamic = "force-dynamic";
-
 function formatSetText(weight: number | null, reps: number | null): string {
   const w = weight == null ? "" : `${weight}kg`;
   const r = reps == null ? "" : `${reps}`;
