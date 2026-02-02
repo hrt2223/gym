@@ -157,24 +157,43 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
     <div className="w-full space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         {isRunning ? (
-          // ランニングマシン: 時間のみ
-          <div className="flex items-center gap-1">
-            <input
-              ref={weightRef}
-              name="weight"
-              inputMode="decimal"
-              placeholder="時間"
-              value={weight}
-              onChange={(e) => {
-                lastFocus.current = "weight";
-                setWeight(e.target.value);
-                scheduleSave();
-              }}
-              onBlur={() => doSave()}
-              className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
-            />
-            <span className="text-xs text-muted-foreground">分</span>
-          </div>
+          // ランニングマシン: 時間と距離
+          <>
+            <div className="flex items-center gap-1">
+              <input
+                ref={weightRef}
+                name="weight"
+                inputMode="decimal"
+                placeholder="時間"
+                value={weight}
+                onChange={(e) => {
+                  lastFocus.current = "weight";
+                  setWeight(e.target.value);
+                  scheduleSave();
+                }}
+                onBlur={() => doSave()}
+                className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">分</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <input
+                ref={repsRef}
+                name="reps"
+                inputMode="decimal"
+                placeholder="距離"
+                value={reps}
+                onChange={(e) => {
+                  lastFocus.current = "reps";
+                  setReps(e.target.value);
+                  scheduleSave();
+                }}
+                onBlur={() => doSave()}
+                className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">km</span>
+            </div>
+          </>
         ) : (
           // 通常の種目: 重量と回数
           <>
