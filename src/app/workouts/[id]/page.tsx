@@ -401,7 +401,12 @@ function WorkoutExerciseBlock({
             </button>
           </form>
           <form action={addSet}>
-            <button className="app-secondary w-full text-xs">セット＋</button>
+            <button 
+              className="app-secondary w-full text-xs"
+              title={(sets ?? []).length > 0 ? "直前のセットをコピーして追加" : "新しいセットを追加"}
+            >
+              {(sets ?? []).length > 0 ? "同じ重量で＋" : "セット＋"}
+            </button>
           </form>
           <form action={removeAction}>
             <input type="hidden" name="workout_exercise_id" value={workoutExerciseId} />

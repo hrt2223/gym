@@ -48,6 +48,13 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
   const [savedAt, setSavedAt] = useState<number>(0);
   const [error, setError] = useState<string>("");
 
+  // スワイプ削除用の状態
+  const [swipeOffset, setSwipeOffset] = useState<number>(0);
+  const [isSwiping, setIsSwiping] = useState<boolean>(false);
+  const swipeStartX = useRef<number>(0);
+  const swipeStartY = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const weightRef = useRef<HTMLInputElement | null>(null);
   const repsRef = useRef<HTMLInputElement | null>(null);
   const lastFocus = useRef<"weight" | "reps">("reps");
@@ -164,8 +171,66 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
     [scheduleSave]
   );
 
+  // スワイプジェスチャーハンドラー
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    swipeStartX.current = touch.clientX;
+    swipeStartY.current = touch.clientY;
+    setIsSwiping(false);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const deltaX = swipeStartX.current - touch.clientX;
+    const deltaY = Math.abs(swipeStartY.current - touch.clientY);
+
+    // 横方向のスワイプのみ（縦スクロールを妨げない）
+    if (Math.abs(deltaX) > 10 && deltaY < 30) {
+      setIsSwiping(true);
+      // 左スワイプのみ（deltaX > 0）
+      if (deltaX > 0) {
+        setSwipeOffset(Math.min(deltaX, 80)); // 最大80px
+      } else {
+        setSwipeOffset(0);
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (swipeOffset > 40) {
+      // 削除実行
+      del();
+      setSwipeOffset(0);
+    } else {
+      // 元に戻す
+      setSwipeOffset(0);
+    }
+    setIsSwiping(false);
+  }, [swipeOffset, del]);
+
   return (
-    <div className="w-full space-y-2">
+    <div 
+      ref={containerRef}
+      className="relative w-full space-y-2 overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* 削除ボタン背景 */}
+      {swipeOffset > 0 && (
+        <div className="absolute right-0 top-0 flex h-full items-center bg-red-600 px-4">
+          <span className="text-sm text-white">削除</span>
+        </div>
+      )}
+      
+      {/* メインコンテンツ */}
+      <div 
+        className="relative bg-background transition-transform duration-200"
+        style={{ 
+          transform: `translateX(-${swipeOffset}px)`,
+          transition: isSwiping ? 'none' : 'transform 0.2s ease-out'
+        }}
+      >
       <div className="flex flex-wrap items-center gap-2">
         {isRunning ? (
           // ランニングマシン: 時間と距離
@@ -310,6 +375,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
