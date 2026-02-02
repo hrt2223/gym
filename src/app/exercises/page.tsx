@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import {
@@ -74,7 +75,7 @@ export default async function ExercisesPage() {
     const parts = toParts(formData.get("target_parts"));
 
     if (!name) {
-      redirect("/exercises");
+      return;
     }
 
     const user = await requireUser();
@@ -87,7 +88,7 @@ export default async function ExercisesPage() {
       targetParts,
     });
 
-    redirect("/exercises");
+    revalidatePath("/exercises");
   }
 
   async function deleteExercise(formData: FormData) {
@@ -97,11 +98,11 @@ export default async function ExercisesPage() {
     const user = await requireUser();
 
     if (!id) {
-      redirect("/exercises");
+      return;
     }
 
     await repoDeleteExercise(user.id, id);
-    redirect("/exercises");
+    revalidatePath("/exercises");
   }
 
   return (

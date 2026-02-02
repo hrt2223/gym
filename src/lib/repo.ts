@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { isLocalOnly } from "@/lib/appMode";
 import { GYM_MACHINE_PRESET_EXERCISES } from "@/lib/exercisePresets";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -74,7 +75,8 @@ export async function upsertGymLoginUrl(input: {
   await writeLocalDb(db);
 }
 
-export async function listExercises(userId: string): Promise<Exercise[]> {
+// 種目リストをキャッシュ（同一リクエスト内で重複取得を防ぐ）
+export const listExercises = cache(async (userId: string): Promise<Exercise[]> => {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase
@@ -88,7 +90,7 @@ export async function listExercises(userId: string): Promise<Exercise[]> {
   return db.exercises
     .filter((e) => e.user_id === userId)
     .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0));
-}
+});
 
 export async function getExercise(userId: string, id: string): Promise<Exercise | null> {
   if (!isLocalOnly()) {
@@ -1138,7 +1140,8 @@ export async function listWorkoutExercises(input: {
     });
 }
 
-export async function listWorkoutTemplates(userId: string): Promise<WorkoutTemplateRow[]> {
+// テンプレートリストをキャッシュ（同一リクエスト内で重複取得を防ぐ）
+export const listWorkoutTemplates = cache(async (userId: string): Promise<WorkoutTemplateRow[]> => {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
 
@@ -1239,7 +1242,7 @@ export async function listWorkoutTemplates(userId: string): Promise<WorkoutTempl
       exercises,
     };
   });
-}
+});
 
 export async function saveWorkoutTemplate(input: {
   userId: string;

@@ -313,7 +313,7 @@ function WorkoutExerciseBlock({
       reps: last?.reps ?? null,
     });
 
-    redirect(`/workouts/${workoutId}`);
+    revalidatePath(`/workouts/${workoutId}`);
   }
 
   async function updateSet(input: { setId: string; weight: number | null; reps: number | null }) {
@@ -345,7 +345,7 @@ function WorkoutExerciseBlock({
       exerciseId,
     });
 
-    redirect(`/workouts/${workoutId}`);
+    revalidatePath(`/workouts/${workoutId}`);
   }
 
   return (
