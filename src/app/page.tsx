@@ -88,39 +88,47 @@ export default async function CalendarPage({ searchParams }: PageProps) {
       <main className="mx-auto max-w-md space-y-4 px-4 py-4">
         <Card>
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">直近7日間</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-sm font-bold text-foreground">💪 直近7日間</div>
+            <div className="text-xs font-semibold text-accent">
               {weeklySummary.workoutDays}日 / {weeklySummary.totalSets}セット
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
-            {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => (
-              <span
-                key={p}
-                className="app-chip"
-              >
-                {p} {weeklySummary.parts[p] ?? 0}
-              </span>
-            ))}
+            {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => {
+              const count = weeklySummary.parts[p] ?? 0;
+              const emoji = { "胸": "💪", "背中": "🔥", "肩": "💪", "腕": "💪", "脚": "🦵", "腹": "🔥" }[p];
+              return (
+                <span
+                  key={p}
+                  className={`app-chip ${count > 0 ? 'bg-accent/10 border-accent/30 font-semibold' : ''}`}
+                >
+                  {emoji} {p} {count}
+                </span>
+              );
+            })}
           </div>
         </Card>
 
         <Card>
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">今月</div>
+            <div className="text-sm font-bold text-foreground">📅 今月</div>
             <div className="text-xs text-muted-foreground">
               {monthSummary.workoutDays}日 / {monthSummary.totalSets}セット
             </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-1">
-            {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => (
-              <span
-                key={p}
-                className="app-chip"
-              >
-                {p} {monthSummary.parts[p] ?? 0}
-              </span>
-            ))}
+            {(["胸", "背中", "肩", "腕", "脚", "腹"] as const).map((p) => {
+              const count = monthSummary.parts[p] ?? 0;
+              const emoji = { "胸": "💪", "背中": "🔥", "肩": "💪", "腕": "💪", "脚": "🦵", "腹": "🔥" }[p];
+              return (
+                <span
+                  key={p}
+                  className={`app-chip ${count > 0 ? 'bg-muted' : ''}`}
+                >
+                  {emoji} {p} {count}
+                </span>
+              );
+            })}
           </div>
         </Card>
 
@@ -134,8 +142,8 @@ export default async function CalendarPage({ searchParams }: PageProps) {
             ←
           </Link>
           <form action={createTodayWorkout}>
-            <button className="app-pill app-pill-accent app-pill-lg text-sm" aria-label="今日のワークアウトを作成">
-              ＋ 今日の記録
+            <button className="app-pill app-pill-accent app-pill-lg text-sm font-bold shadow-lg" aria-label="今日のワークアウトを作成">
+              🏋️ 今日の記録
             </button>
           </form>
           <Link

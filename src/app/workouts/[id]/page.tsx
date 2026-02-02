@@ -361,25 +361,36 @@ function WorkoutExerciseBlock({
     <Card>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 sm:flex-1">
-          <div className="text-sm font-semibold">{title}</div>
+          <div className="flex items-center gap-2">
+            <div className="text-base font-bold text-foreground">💪 {title}</div>
+            {(sets ?? []).length > 0 && (
+              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">
+                {(sets ?? []).length}セット
+              </span>
+            )}
+          </div>
           {prevText && (
-            <div className="mt-0.5 text-xs text-muted-foreground">
-              前回：{prevText}
+            <div className="mt-1 flex items-center gap-1 text-xs text-accent">
+              <span>🔥 前回：</span>
+              <span className="font-semibold">{prevText}</span>
             </div>
           )}
           {targetParts.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-1">
-              {targetParts.map((p) => (
-                <span
-                  key={p}
-                  className="app-chip"
-                >
-                  {p}
-                </span>
-              ))}
+              {targetParts.map((p) => {
+                const emoji = { "胸": "💪", "背中": "🔥", "肩": "💪", "腕": "💪", "脚": "🦵", "腹": "🔥" }[p] || "💪";
+                return (
+                  <span
+                    key={p}
+                    className="app-chip bg-accent/10 border-accent/30"
+                  >
+                    {emoji} {p}
+                  </span>
+                );
+              })}
             </div>
           )}
-          <div className="mt-2 space-y-2">
+          <div className="mt-3 space-y-2">
             {(sets ?? []).map((s) => (
               <SetRowClient
                 key={s.id}
@@ -396,21 +407,23 @@ function WorkoutExerciseBlock({
 
         <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch">
           <form action={copyPreviousSets}>
-            <button className="app-secondary w-full text-xs">
-              前回コピー
+            <button className="app-secondary w-full text-xs font-semibold">
+              ⏮️ 前回コピー
             </button>
           </form>
           <form action={addSet}>
             <button 
-              className="app-secondary w-full text-xs"
+              className="app-secondary w-full text-xs font-semibold bg-accent/5 border-accent/30"
               title={(sets ?? []).length > 0 ? "直前のセットをコピーして追加" : "新しいセットを追加"}
             >
-              {(sets ?? []).length > 0 ? "同じ重量で＋" : "セット＋"}
+              {(sets ?? []).length > 0 ? "➕ 同じ重量" : "➕ セット"}
             </button>
           </form>
           <form action={removeAction}>
             <input type="hidden" name="workout_exercise_id" value={workoutExerciseId} />
-            <button className="app-secondary w-full text-xs">削除</button>
+            <button className="app-secondary w-full text-xs text-red-600">
+              🗑️ 削除
+            </button>
           </form>
         </div>
       </div>

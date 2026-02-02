@@ -293,26 +293,26 @@ export default async function ProgressPage({
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="app-secondary">
-                  <div className="text-[11px] text-muted-foreground">最新</div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
+                  <div className="text-[11px] font-semibold text-accent">📊 最新</div>
+                  <div className="mt-1 text-lg font-bold text-foreground">
                     {typeof last === "number" ? `${formatNumber(last)}${metric.unit}` : "-"}
                   </div>
                   {typeof diffPrev === "number" && (
-                    <div className="mt-1 text-[11px] text-muted-foreground">
-                      前回比 {signNumber(diffPrev)}{metric.unit}
+                    <div className={`mt-1 text-[11px] font-semibold ${diffPrev > 0 ? 'text-green-600' : diffPrev < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                      {diffPrev > 0 ? '⬆️' : diffPrev < 0 ? '⬇️' : '➡️'} 前回比 {signNumber(diffPrev)}{metric.unit}
                     </div>
                   )}
                 </div>
-                <div className="app-secondary">
-                  <div className="text-[11px] text-muted-foreground">ベスト</div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
+                <div className="app-secondary bg-accent/5 border-accent/30">
+                  <div className="text-[11px] font-semibold text-accent">🏆 ベスト</div>
+                  <div className="mt-1 text-lg font-bold text-accent">
                     {typeof best === "number" ? `${formatNumber(best)}${metric.unit}` : "-"}
                   </div>
                   <div className="mt-1 text-[11px] text-muted-foreground">{rangeLabel(range)}</div>
                 </div>
                 <div className="app-secondary">
-                  <div className="text-[11px] text-muted-foreground">変化</div>
-                  <div className="mt-1 text-sm font-semibold text-foreground">
+                  <div className="text-[11px] font-semibold text-foreground">📈 変化</div>
+                  <div className="mt-1 text-lg font-bold text-foreground">
                     {diffAll != null ? `${diffAll > 0 ? "+" : ""}${formatNumber(diffAll)}${metric.unit}` : "-"}
                   </div>
                   <div className="mt-1 text-[11px] text-muted-foreground">最初→最新</div>
