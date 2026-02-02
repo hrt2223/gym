@@ -1549,11 +1549,22 @@ export async function addWorkoutExercise(input: {
 
     const maxSort = (last?.[0]?.sort_order ?? -1) as number;
 
-    await supabase.from("workout_exercises").insert({
+    const { data: newWorkoutExercise } = await supabase.from("workout_exercises").insert({
       workout_id: input.workoutId,
       exercise_id: input.exerciseId,
       sort_order: maxSort + 1,
-    });
+    }).select("id").single();
+
+    // 4セット分を自動作成
+    if (newWorkoutExercise?.id) {
+      const sets = Array.from({ length: 4 }, (_, i) => ({
+        workout_exercise_id: newWorkoutExercise.id,
+        set_order: i,
+        weight: null,
+        reps: null,
+      }));
+      await supabase.from("exercise_sets").insert(sets);
+    }
     return;
   }
 
@@ -1561,12 +1572,23 @@ export async function addWorkoutExercise(input: {
   const maxSort = db.workout_exercises
     .filter((we) => we.workout_id === input.workoutId)
     .reduce((m, we) => Math.max(m, we.sort_order), -1);
+  const workoutExerciseId = newId();
   db.workout_exercises.push({
-    id: newId(),
+    id: workoutExerciseId,
     workout_id: input.workoutId,
     exercise_id: input.exerciseId,
     sort_order: maxSort + 1,
   });
+  // 4セット分を自動作成
+  for (let i = 0; i < 4; i++) {
+    db.exercise_sets.push({
+      id: newId(),
+      workout_exercise_id: workoutExerciseId,
+      set_order: i,
+      weight: null,
+      reps: null,
+    });
+  }
   await writeLocalDb(db);
 }
 
