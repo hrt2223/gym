@@ -70,7 +70,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, onSave, onDele
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     saveTimerRef.current = window.setTimeout(() => {
       doSave();
-    }, 1200);
+    }, 800);
   }, [doSave]);
 
   useEffect(() => {

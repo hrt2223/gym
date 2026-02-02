@@ -106,6 +106,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           <Link
             className="app-pill text-sm"
             href={`/?ym=${prevYm}`}
+            prefetch={true}
           >
             ←
           </Link>
@@ -117,6 +118,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           <Link
             className="app-pill text-sm"
             href={`/?ym=${nextYm}`}
+            prefetch={true}
           >
             →
           </Link>

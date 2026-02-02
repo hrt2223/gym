@@ -68,11 +68,6 @@ export default async function WorkoutEditPage({ params }: PageProps) {
     ...(groupedExercises.get("未分類")?.length ? (["未分類"] as PartKey[]) : []),
   ];
 
-  for (const k of exerciseGroupKeys) {
-    const arr = groupedExercises.get(k) ?? [];
-    arr.sort((a, b) => a.name.localeCompare(b.name, "ja"));
-    groupedExercises.set(k, arr);
-  }
   const workoutExercises = await listWorkoutExercises({ userId: user.id, workoutId: id });
   const workoutExerciseIds = (workoutExercises ?? []).map((we) => we.id);
   const exerciseIds = (workoutExercises ?? []).map((we) => we.exercise_id);
