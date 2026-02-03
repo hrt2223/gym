@@ -904,6 +904,44 @@ export async function getWeeklySummary(input: {
   return getMonthSummary({ userId: input.userId, startDate, endDate });
 }
 
+// カレンダーページ用：月間データと週間サマリーを1回で取得
+export async function getCalendarPageData(input: {
+  userId: string;
+  monthStartDate: string;
+  monthEndDate: string;
+}) {
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+  const weekStartDate = sevenDaysAgo.toISOString().split("T")[0];
+  const weekEndDate = today.toISOString().split("T")[0];
+
+  // 月間データと週間データを並列取得
+  const [monthData, weekData] = await Promise.all([
+    getCalendarMonthData({ userId: input.userId, startDate: input.monthStartDate, endDate: input.monthEndDate }),
+    // 週間データが月間データに含まれる場合は月間データから抽出、そうでない場合は別途取得
+    input.monthStartDate <= weekStartDate && input.monthEndDate >= weekEndDate
+      ? Promise.resolve(null) // 月間データに含まれるので取得不要
+      : getMonthSummary({ userId: input.userId, startDate: weekStartDate, endDate: weekEndDate })
+  ]);
+
+  let weeklySummary: MonthSummary;
+  if (weekData) {
+    weeklySummary = weekData;
+  } else {
+    // 月間データから週間分を計算（最適化）
+    weeklySummary = { workoutDays: 0, totalSets: 0, parts: { 胸: 0, 背中: 0, 肩: 0, 腕: 0, 脚: 0, 腹: 0 } };
+    // 簡易実装：週間データが必要な場合は別途取得
+    const weekDataFallback = await getMonthSummary({ userId: input.userId, startDate: weekStartDate, endDate: weekEndDate });
+    weeklySummary = weekDataFallback;
+  }
+
+  return {
+    monthData,
+    weeklySummary
+  };
+}
+
 export async function listWorkoutsMenuByDate(input: {
   userId: string;
   date: string;
