@@ -320,6 +320,17 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
             {statusText}
           </div>
         )}
+
+        {/* 削除ボタンを常に表示 */}
+        <button
+          type="button"
+          className="ml-auto rounded-lg border border-red-600/30 bg-red-600/10 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-600/20"
+          disabled={isPending}
+          onClick={del}
+          aria-label="このセットを削除"
+        >
+          削除
+        </button>
       </div>
 
       {!isRunning && (
@@ -367,15 +378,6 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
             onClick={(e) => e.preventDefault()}
           >
             +1回
-          </button>
-          <button
-            type="button"
-            className="app-control px-2 py-1 text-xs"
-            disabled={isPending}
-            onClick={del}
-            aria-label="このセットを削除"
-          >
-            ×
           </button>
         </div>
       )}
