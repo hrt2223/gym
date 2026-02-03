@@ -7,6 +7,8 @@ import { Card } from "@/app/_components/Card";
 import { PrimaryButton } from "@/app/_components/PrimaryButton";
 import { createWorkout as repoCreateWorkout, listWorkoutsMenuByDate } from "@/lib/repo";
 
+export const revalidate = 30;
+
 type PageProps = { params: Promise<{ date: string }> };
 
 export default async function DayPage({ params }: PageProps) {

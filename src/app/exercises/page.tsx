@@ -15,7 +15,7 @@ import { inferTargetParts } from "@/lib/inferTargetParts";
 import { GYM_MACHINE_PRESET_EXERCISES } from "@/lib/exercisePresets";
 import { PartPicker } from "./PartPicker";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 function toParts(value: FormDataEntryValue | null): string[] {
   if (!value) return [];

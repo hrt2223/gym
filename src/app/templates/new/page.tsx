@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { listExercises, saveWorkoutTemplate } from "@/lib/repo";
 import { TemplateCreateClient } from "@/app/templates/new/TemplateCreateClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type SaveInput = {
   name: string;

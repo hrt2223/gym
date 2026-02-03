@@ -28,6 +28,8 @@ import {
   updateWorkout as repoUpdateWorkout,
 } from "@/lib/repo";
 
+export const revalidate = 10;
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };

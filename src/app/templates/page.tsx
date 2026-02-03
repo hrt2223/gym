@@ -14,7 +14,7 @@ import {
 } from "@/lib/repo";
 import { TemplateEditorClient } from "./TemplateEditorClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 type SaveInput = {
   templateId?: string;
