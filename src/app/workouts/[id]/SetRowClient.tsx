@@ -248,6 +248,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
                   scheduleSave();
                 }}
                 onBlur={() => doSave()}
+                onFocus={(e) => e.target.select()}
                 className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
               />
               <span className="text-xs text-muted-foreground">分</span>
@@ -265,6 +266,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
                   scheduleSave();
                 }}
                 onBlur={() => doSave()}
+                onFocus={(e) => e.target.select()}
                 className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
               />
               <span className="text-xs text-muted-foreground">km</span>
@@ -286,6 +288,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
                   scheduleSave();
                 }}
                 onBlur={() => doSave()}
+                onFocus={(e) => e.target.select()}
                 className="w-24 rounded-lg border border-border bg-card px-2 py-1 text-sm"
               />
               <span className="text-xs text-muted-foreground">kg</span>
@@ -304,6 +307,7 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
                   scheduleSave();
                 }}
                 onBlur={() => doSave()}
+                onFocus={(e) => e.target.select()}
                 className="w-20 rounded-lg border border-border bg-card px-2 py-1 text-sm"
               />
               <span className="text-xs text-muted-foreground">回</span>
