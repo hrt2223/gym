@@ -422,7 +422,7 @@ function WorkoutExerciseBlock({
           </form>
           <form action={removeAction}>
             <input type="hidden" name="workout_exercise_id" value={workoutExerciseId} />
-            <button className="app-secondary w-full text-xs text-red-600">
+            <button type="submit" className="app-secondary w-full text-xs text-red-600">
               削除
             </button>
           </form>
