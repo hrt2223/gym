@@ -343,6 +343,7 @@ function WorkoutExerciseBlock({
     "use server";
     await requireUser();
     await repoDeleteSet({ setId: input.setId });
+    revalidatePath(`/workouts/${workoutId}`);
   }
 
   async function copyPreviousSets() {
