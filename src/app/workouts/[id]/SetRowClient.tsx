@@ -315,22 +315,25 @@ export function SetRowClient({ setId, initialWeight, initialReps, exerciseName, 
           </>
         )}
 
-        {statusText && (
-          <div className={`ml-auto text-xs ${error ? "text-red-600" : "text-muted-foreground"}`}>
-            {statusText}
-          </div>
-        )}
-
-        {/* 削除ボタンを常に表示 */}
-        <button
-          type="button"
-          className="ml-auto rounded-lg border border-red-600/30 bg-red-600/10 px-3 py-1 text-xs font-semibold text-red-600 hover:bg-red-600/20"
-          disabled={isPending}
-          onClick={del}
-          aria-label="このセットを削除"
-        >
-          削除
-        </button>
+        {/* ステータステキストと削除ボタン */}
+        <div className="ml-auto flex items-center gap-2">
+          {statusText && (
+            <div className={`text-xs ${error ? "text-red-600" : "text-muted-foreground"}`}>
+              {statusText}
+            </div>
+          )}
+          
+          {/* 削除ボタン */}
+          <button
+            type="button"
+            className="rounded-lg border-2 border-red-600 bg-red-600 px-3 py-1 text-xs font-bold text-white hover:bg-red-700 active:scale-95"
+            disabled={isPending}
+            onClick={del}
+            aria-label="このセットを削除"
+          >
+            削除
+          </button>
+        </div>
       </div>
 
       {!isRunning && (
