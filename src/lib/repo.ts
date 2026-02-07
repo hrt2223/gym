@@ -916,32 +916,16 @@ export async function getCalendarPageData(input: {
   const weekStartDate = sevenDaysAgo.toISOString().split("T")[0];
   const weekEndDate = today.toISOString().split("T")[0];
 
-  // 月間データと週間データを並列取得
-  const [monthData, weekData] = await Promise.all([
+  const [monthData, weeklySummary] = await Promise.all([
     getCalendarMonthData({ userId: input.userId, startDate: input.monthStartDate, endDate: input.monthEndDate }),
-    // 週間データが月間データに含まれる場合は月間データから抽出、そうでない場合は別途取得
-    input.monthStartDate <= weekStartDate && input.monthEndDate >= weekEndDate
-      ? Promise.resolve(null) // 月間データに含まれるので取得不要
-      : getMonthSummary({ userId: input.userId, startDate: weekStartDate, endDate: weekEndDate })
+    getMonthSummary({ userId: input.userId, startDate: weekStartDate, endDate: weekEndDate }),
   ]);
-
-  let weeklySummary: MonthSummary;
-  if (weekData) {
-    weeklySummary = weekData;
-  } else {
-    // 月間データから週間分を計算（最適化）
-    weeklySummary = { workoutDays: 0, totalSets: 0, parts: { 胸: 0, 背中: 0, 肩: 0, 腕: 0, 脚: 0, 腹: 0 } };
-    // 簡易実装：週間データが必要な場合は別途取得
-    const weekDataFallback = await getMonthSummary({ userId: input.userId, startDate: weekStartDate, endDate: weekEndDate });
-    weeklySummary = weekDataFallback;
-  }
 
   return {
     monthData,
-    weeklySummary
+    weeklySummary,
   };
 }
-
 export async function listWorkoutsMenuByDate(input: {
   userId: string;
   date: string;
@@ -1817,9 +1801,17 @@ export async function addSet(input: {
 }): Promise<void> {
   if (!isLocalOnly()) {
     const supabase = await createSupabaseServerClient();
+    const { data: lastRows } = await supabase
+      .from("exercise_sets")
+      .select("set_order")
+      .eq("workout_exercise_id", input.workoutExerciseId)
+      .order("set_order", { ascending: false })
+      .limit(1);
+    const maxOrder = Number((lastRows?.[0] as { set_order?: number } | undefined)?.set_order ?? -1);
+
     await supabase.from("exercise_sets").insert({
       workout_exercise_id: input.workoutExerciseId,
-      set_order: 0,
+      set_order: Number.isFinite(maxOrder) ? maxOrder + 1 : 0,
       weight: input.weight,
       reps: input.reps,
     });
@@ -1884,16 +1876,55 @@ export async function copyPreviousSets(input: {
     const supabase = await createSupabaseServerClient();
 
     // 直近の同一種目のセットを探す
-    const { data: prevWe } = await supabase
+    const { data: currentWorkout } = await supabase
+      .from("workouts")
+      .select("workout_date, created_at")
+      .eq("id", input.workoutId)
+      .maybeSingle();
+
+    const currentDate = String((currentWorkout as { workout_date?: string } | null)?.workout_date ?? "");
+    const currentCreatedAt = String((currentWorkout as { created_at?: string } | null)?.created_at ?? "");
+
+    if (!currentDate || !currentCreatedAt) {
+      await supabase.from("exercise_sets").insert({
+        workout_exercise_id: input.workoutExerciseId,
+        set_order: 0,
+        weight: null,
+        reps: null,
+      });
+      return;
+    }
+
+    const { data: prevRowsRaw } = await supabase
       .from("workout_exercises")
-      .select("id, workout_id")
+      .select("id, workouts!inner(workout_date, created_at, user_id)")
       .eq("exercise_id", input.exerciseId)
       .neq("id", input.workoutExerciseId)
+      .eq("workouts.user_id", input.userId)
+      .order("workout_date", { foreignTable: "workouts", ascending: false })
+      .order("created_at", { foreignTable: "workouts", ascending: false })
       .order("id", { ascending: false })
-      .limit(20);
+      .limit(100);
 
-    const prevWeIds = (prevWe ?? []).map((r) => r.id);
-    const lastId = prevWeIds[0];
+    type PrevWorkoutExerciseRow = {
+      id: string;
+      workouts?:
+        | { workout_date?: string; created_at?: string; user_id?: string }
+        | Array<{ workout_date?: string; created_at?: string; user_id?: string }>
+        | null;
+    };
+
+    const prevRows = (prevRowsRaw ?? []) as PrevWorkoutExerciseRow[];
+    const prev = prevRows.find((row) => {
+      const wRel = row.workouts;
+      const w = Array.isArray(wRel) ? wRel[0] : wRel;
+      if (!w?.workout_date || !w?.created_at) return false;
+      if (w.workout_date < currentDate) return true;
+      if (w.workout_date > currentDate) return false;
+      return w.created_at < currentCreatedAt;
+    });
+
+    const lastId = prev?.id ?? "";
 
     if (!lastId) {
       await supabase.from("exercise_sets").insert({
