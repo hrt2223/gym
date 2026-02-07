@@ -27,6 +27,7 @@ import {
   updateSet as repoUpdateSet,
   updateWorkout as repoUpdateWorkout,
 } from "@/lib/repo";
+import { measureServer } from "@/lib/serverPerf";
 
 export const revalidate = 10;
 
@@ -41,10 +42,16 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   
   // 全データを最大限並列取得（2段階 → 1段階に統合）
   const [workout, exercises, workoutExercises, templates] = await Promise.all([
-    getWorkout(user.id, id),
-    listExercises(user.id),
-    listWorkoutExercises({ userId: user.id, workoutId: id }),
-    listWorkoutTemplates(user.id),
+    measureServer("page:/workouts/[id] getWorkout", { userId: user.id, workoutId: id }, () =>
+      getWorkout(user.id, id)
+    ),
+    measureServer("page:/workouts/[id] listExercises", { userId: user.id }, () => listExercises(user.id)),
+    measureServer("page:/workouts/[id] listWorkoutExercises", { userId: user.id, workoutId: id }, () =>
+      listWorkoutExercises({ userId: user.id, workoutId: id })
+    ),
+    measureServer("page:/workouts/[id] listWorkoutTemplates", { userId: user.id }, () =>
+      listWorkoutTemplates(user.id)
+    ),
   ]);
 
   if (!workout) {
@@ -78,12 +85,21 @@ export default async function WorkoutEditPage({ params }: PageProps) {
   
   // セット情報と前回記録を並列取得
   const [setsByWorkoutExerciseId, prevTopByExerciseId] = await Promise.all([
-    listSetsByWorkoutExerciseIds({ workoutExerciseIds }),
-    listPreviousTopSetsBefore({
-      userId: user.id,
-      beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
-      exerciseIds,
-    }),
+    measureServer(
+      "page:/workouts/[id] listSetsByWorkoutExerciseIds",
+      { workoutExerciseCount: workoutExerciseIds.length },
+      () => listSetsByWorkoutExerciseIds({ workoutExerciseIds })
+    ),
+    measureServer(
+      "page:/workouts/[id] listPreviousTopSetsBefore",
+      { userId: user.id, exerciseCount: exerciseIds.length },
+      () =>
+        listPreviousTopSetsBefore({
+          userId: user.id,
+          beforeWorkout: { workoutDate: workoutRecord.workout_date, createdAt: workoutRecord.created_at },
+          exerciseIds,
+        })
+    ),
   ]);
 
 

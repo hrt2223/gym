@@ -6,6 +6,7 @@ import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { PrimaryButton } from "@/app/_components/PrimaryButton";
 import { createWorkout as repoCreateWorkout, listWorkoutsMenuByDate } from "@/lib/repo";
+import { measureServer } from "@/lib/serverPerf";
 
 export const revalidate = 30;
 
@@ -20,7 +21,11 @@ export default async function DayPage({ params }: PageProps) {
   }
 
   const user = await requireUser();
-  const workouts = await listWorkoutsMenuByDate({ userId: user.id, date });
+  const workouts = await measureServer(
+    "page:/day/[date] listWorkoutsMenuByDate",
+    { userId: user.id, date },
+    () => listWorkoutsMenuByDate({ userId: user.id, date })
+  );
 
   async function createWorkout(formData: FormData) {
     "use server";

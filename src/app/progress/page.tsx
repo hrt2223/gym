@@ -3,6 +3,7 @@ import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { requireUser } from "@/lib/auth";
 import { listExercises, listExerciseProgress } from "@/lib/repo";
+import { measureServer } from "@/lib/serverPerf";
 import { ExerciseProgressPickerClient } from "./ExerciseProgressPickerClient";
 import { ProgressChartClient } from "./ProgressChartClient";
 
@@ -153,7 +154,11 @@ export default async function ProgressPage({
   searchParams?: Promise<{ exerciseId?: string; metric?: string; range?: string; bucket?: string }>;
 }) {
   const user = await requireUser();
-  const exercises = await listExercises(user.id);
+  const exercises = await measureServer(
+    "page:/progress listExercises",
+    { userId: user.id },
+    () => listExercises(user.id)
+  );
 
   const sp = (await searchParams) ?? {};
   const exerciseId = typeof sp.exerciseId === "string" ? sp.exerciseId : "";
@@ -166,7 +171,11 @@ export default async function ProgressPage({
 
   const baseLimit = range === "all" ? 540 : range === "6m" ? 270 : 180;
   const rawPoints = exerciseId
-    ? await listExerciseProgress({ userId: user.id, exerciseId, limit: baseLimit })
+    ? await measureServer(
+        "page:/progress listExerciseProgress",
+        { userId: user.id, exerciseId, limit: baseLimit },
+        () => listExerciseProgress({ userId: user.id, exerciseId, limit: baseLimit })
+      )
     : [];
 
   const points = (rawPoints as Point[]).filter((p) => {

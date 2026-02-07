@@ -16,6 +16,7 @@ import { createWorkout, getCalendarPageData } from "@/lib/repo";
 import { Header } from "@/app/_components/Header";
 import { Card } from "@/app/_components/Card";
 import { formatYmd } from "@/lib/date";
+import { measureServer } from "@/lib/serverPerf";
 
 export const revalidate = 60;
 
@@ -34,11 +35,18 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
 
-  const { monthData, weeklySummary } = await getCalendarPageData({
-    userId: user.id,
-    monthStartDate: format(monthStart, "yyyy-MM-dd"),
-    monthEndDate: format(monthEnd, "yyyy-MM-dd"),
-  });
+  const monthStartDate = format(monthStart, "yyyy-MM-dd");
+  const monthEndDate = format(monthEnd, "yyyy-MM-dd");
+  const { monthData, weeklySummary } = await measureServer(
+    "page:/ getCalendarPageData",
+    { userId: user.id, monthStartDate, monthEndDate },
+    () =>
+      getCalendarPageData({
+        userId: user.id,
+        monthStartDate,
+        monthEndDate,
+      })
+  );
 
   const monthSummary = monthData.summary;
   const hasWorkout = new Set(monthData.workoutDates);

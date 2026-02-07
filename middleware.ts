@@ -20,6 +20,8 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   });
+  const pathname = request.nextUrl.pathname;
+  const perfEnabled = process.env.GYMAPP_PERF_LOG === "1";
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -34,11 +36,20 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  const authStart = perfEnabled ? Date.now() : 0;
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (perfEnabled) {
+    const authMs = Date.now() - authStart;
+    console.log(
+      `[perf] middleware auth.getUser ${authMs.toFixed(1)}ms ${JSON.stringify({
+        pathname,
+        hasUser: Boolean(user),
+      })}`
+    );
+  }
 
-  const pathname = request.nextUrl.pathname;
   const isPublic =
     pathname === "/login" ||
     pathname.startsWith("/auth/callback") ||

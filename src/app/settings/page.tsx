@@ -5,12 +5,17 @@ import { Card } from "@/app/_components/Card";
 import { isLocalOnly } from "@/lib/appMode";
 import Link from "next/link";
 import { SettingsAutoSaveForm } from "./SettingsAutoSaveForm";
+import { measureServer } from "@/lib/serverPerf";
 
 export const revalidate = 300;
 
 export default async function SettingsPage() {
   const user = await requireUser();
-  const gymUrl = await getGymLoginUrl(user.id);
+  const gymUrl = await measureServer(
+    "page:/settings getGymLoginUrl",
+    { userId: user.id },
+    () => getGymLoginUrl(user.id)
+  );
 
   const mode = isLocalOnly() ? "local" : "supabase";
   const commit = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_GITHUB_COMMIT_SHA || "";
