@@ -132,7 +132,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           <Link
             className="app-pill text-sm"
             href={`/?ym=${prevYm}`}
-            prefetch={true}
+            prefetch={false}
             aria-label="前の月へ"
           >
             ←
@@ -145,7 +145,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           <Link
             className="app-pill text-sm"
             href={`/?ym=${nextYm}`}
-            prefetch={true}
+            prefetch={false}
             aria-label="次の月へ"
           >
             →
@@ -171,6 +171,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
                 <Link
                   key={ymd}
                   href={`/day/${ymd}`}
+                  prefetch={false}
                   className={`app-day flex h-12 flex-col items-center justify-center text-sm text-foreground ${
                     marked ? "app-day-marked" : ""
                   } ${isToday ? "app-day-today" : ""}`}
